@@ -123,12 +123,6 @@ function paint(ctx, d, signature) {
     total('Ödənilib', fmtMoney(d.paid))
   }
 
-  y += 36
-  ctx.fillStyle = INK
-  ctx.fillRect(M, y, W - 2 * M, 3)
-  y += 70
-  total('Müştərinin bizə ümumi borcu', fmtMoney(d.debt), true)
-
   y += 110
   ctx.textAlign = 'left'
   ctx.fillStyle = GREY
@@ -151,6 +145,12 @@ function paint(ctx, d, signature) {
   const signedLine = [d.signedBy, d.signature ? fmtStamp(d.signedAt) : ''].filter(Boolean).join(' · ')
   if (signedLine) ctx.fillText(signedLine, M, boxTop + boxH + 44)
   y = boxTop + boxH + 44
+
+  y += 50
+  ctx.fillStyle = INK
+  ctx.fillRect(M, y, W - 2 * M, 3)
+  y += 70
+  total('Müştərinin bizə ümumi borcu', fmtMoney(d.debt), true)
 
   if (d.sentAt) {
     y += 70
