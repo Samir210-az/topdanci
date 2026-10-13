@@ -672,3 +672,9 @@ textarea.input {
 .wordmark.on-dark .wm-b {
   color: #8fd4b0;
 }
+
+.wordmark.on-dark {
+  display: inline-block;
+  padding-bottom: 3px;
+  border-bottom: 3px solid #fff;
+}
