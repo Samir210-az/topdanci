@@ -192,7 +192,7 @@ export default function NewSale() {
         onChange={cart.setType}
         options={[
           { value: 'sale', label: 'Satış' },
-          { value: 'consign', label: 'Əmanət mal' },
+          { value: 'consign', label: 'Satışa verilən' },
         ]}
       />
       {consign && (

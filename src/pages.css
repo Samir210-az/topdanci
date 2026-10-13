@@ -424,13 +424,7 @@ table.data .num {
 
 /* rəngli kartlar: bütün kartlarda yazı ağdır */
 :root {
-  --card: #1d5142;
-  --c-green: #17463a;
-  --c-teal: #17606e;
-  --c-amber: #98500f;
-  --c-red: #a3281d;
-  --c-indigo: #3a4a8f;
-  --c-plum: #6b3a74;
+  --card: #17463a;
 }
 
 .card,
@@ -444,33 +438,10 @@ table.data .num {
 }
 
 .summary {
-  background: var(--c-teal);
+  background: var(--card);
   color: #fff;
 }
 
-.stat {
-  background: var(--c-green);
-}
-
-.stat.t-teal {
-  background: var(--c-teal);
-}
-
-.stat.t-amber {
-  background: var(--c-amber);
-}
-
-.stat.t-red {
-  background: var(--c-red);
-}
-
-.stat.t-indigo {
-  background: var(--c-indigo);
-}
-
-.stat.t-plum {
-  background: var(--c-plum);
-}
 
 .stat span {
   color: rgba(255, 255, 255, 0.82);

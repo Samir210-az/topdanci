@@ -6,7 +6,7 @@ import { useData } from '../store/DataContext'
 import { dateKey, toDate, fmtTime } from '../lib/dates'
 import { fmtMoney } from '../lib/money'
 
-const TYPE_LABEL = { sale: 'satış', consign: 'əmanət', settle: 'hesablaşma' }
+const TYPE_LABEL = { sale: 'satış', consign: 'satışa verilən', settle: 'hesablaşma' }
 
 export default function Dashboard() {
   const { sales, payments, customers, suppliers, products, productMap } = useData()
@@ -113,23 +113,23 @@ export default function Dashboard() {
             <span>Satış</span>
             <strong>{fmtMoney(view.revenue)}</strong>
           </div>
-          <div className="stat t-teal">
+          <div className="stat">
             <span>Yığılan pul</span>
             <strong>{fmtMoney(view.collected)}</strong>
           </div>
-          <div className="stat t-amber">
-            <span>Əmanətə verilən</span>
+          <div className="stat">
+            <span>Satışa verilən</span>
             <strong>{fmtMoney(view.consigned)}</strong>
           </div>
-          <Link to="/customers" className="stat t-red">
+          <Link to="/customers" className="stat">
             <span>Müştərilərin borcu</span>
             <strong>{fmtMoney(view.debt)}</strong>
           </Link>
-          <Link to="/suppliers" className="stat t-indigo">
+          <Link to="/suppliers" className="stat">
             <span>Təchizatçılara borcum</span>
             <strong>{fmtMoney(view.owed)}</strong>
           </Link>
-          <Link to="/reports" className="stat t-plum">
+          <Link to="/reports" className="stat">
             <span>Müştərilərdə mal</span>
             <strong>{fmtMoney(view.atCustomers)}</strong>
           </Link>

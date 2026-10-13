@@ -20,7 +20,7 @@ export function waLink(raw, text = '') {
   return `https://wa.me/${digits}${query}`
 }
 
-const TITLES = { sale: 'Qaimə', consign: 'Əmanət qaiməsi', settle: 'Hesablaşma' }
+const TITLES = { sale: 'Qaimə', consign: 'Satışa verilən mal qaiməsi', settle: 'Hesablaşma' }
 
 export function buildReceipt(sale, balance) {
   const rows = sale.items.map(

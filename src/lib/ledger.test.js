@@ -39,7 +39,7 @@ test('ödənilən məbləğ cəmdən çox ola bilməz', () => {
   )
 })
 
-test('əmanətdə borc yazılmır, mal müştəridə qalır', () => {
+test('satışa verilən malda borc yazılmır, mal müştəridə qalır', () => {
   const plan = planSale({ type: 'consign', items: [item(10)], stockOf: { a: 10 } })
   assert.equal(plan.fx.balance, 0)
   assert.equal(plan.paid, 0)
@@ -47,7 +47,7 @@ test('əmanətdə borc yazılmır, mal müştəridə qalır', () => {
   assert.deepEqual(plan.fx.holdings, { a: 10 })
 })
 
-test('əmanət hesablaşması: satılan borca, qaytarılan anbara yazılır', () => {
+test('satışa verilən malın hesablaşması: satılan borca, qaytarılan anbara yazılır', () => {
   const plan = planSettle({
     holdings: { a: 10 },
     sold: [item(6)],
@@ -80,7 +80,7 @@ test('satışın ləğvi anbarı və borcu geri qaytarır', () => {
   assert.equal(undo.balance, -5000)
 })
 
-test('əmanət mal müştəridə azalıbsa ləğv edilmir', () => {
+test('satışa verilən mal müştəridə azalıbsa ləğv edilmir', () => {
   const plan = planSale({ type: 'consign', items: [item(10)], stockOf: { a: 10 } })
   assert.throws(
     () => planCancel({ fx: plan.fx, stockOf: { a: 0 }, holdingsOf: { a: 4 } }),

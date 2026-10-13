@@ -11,7 +11,7 @@ import { fmtDateTime, toDate } from '../lib/dates'
 import { buildReceipt, sendText, telLink, waLink } from '../lib/share'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
-const TYPE_LABEL = { sale: 'Satış', consign: 'Əmanət mal', settle: 'Hesablaşma' }
+const TYPE_LABEL = { sale: 'Satış', consign: 'Satışa verilən', settle: 'Hesablaşma' }
 
 function PaymentSheet({ open, customer, onClose }) {
   const [amount, setAmount] = useState('')
