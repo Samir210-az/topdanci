@@ -1,4 +1,7 @@
+import { useRef, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import ServiceSheet from './ServiceSheet'
+import { usePwaInstall } from '../lib/install'
 import { Icon } from './Icon'
 import { useData } from '../store/DataContext'
 import { useCart } from '../store/CartContext'
@@ -33,20 +36,40 @@ function SyncBadge() {
 export default function Layout() {
   const { ready } = useData()
   const { count } = useCart()
+  const [service, setService] = useState(false)
+  const pwa = usePwaInstall()
+  const taps = useRef({ n: 0, t: 0 })
+
+  function brandTap(event) {
+    const now = Date.now()
+    taps.current = { n: now - taps.current.t < 2000 ? taps.current.n + 1 : 1, t: now }
+    if (taps.current.n >= 5) {
+      event.preventDefault()
+      taps.current = { n: 0, t: 0 }
+      setService(true)
+    }
+  }
 
   return (
     <div className="app">
       <header className="topbar">
-        <Link to="/" className="brand">
+        <Link to="/" className="brand" onClick={brandTap}>
           Topdançı
         </Link>
         <SyncBadge />
+        {pwa.canPrompt && !pwa.installed && (
+          <button type="button" className="btn sm" onClick={pwa.install}>
+            Yüklə
+          </button>
+        )}
         <Link to="/settings" className="icon-btn light" aria-label="Hesab">
           <Icon name="user" />
         </Link>
       </header>
 
       <main className="page">{ready ? <Outlet /> : <p className="muted">Yüklənir…</p>}</main>
+
+      <ServiceSheet open={service} onClose={() => setService(false)} />
 
       <nav className="nav" aria-label="Əsas menyu">
         {TABS.map((tab) => (
