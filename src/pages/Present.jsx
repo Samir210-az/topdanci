@@ -80,6 +80,9 @@ export default function Present() {
                 <article key={product.id} className="tile">
                   <button type="button" className="tile-photo" onClick={() => setZoom(product)} aria-label={`${product.name}: böyüt`}>
                     <ProductImage product={product} />
+                    <span className="tile-stock">
+                      Qalıb: {product.stock} {product.unit}
+                    </span>
                   </button>
                   <div className="tile-info">
                     <strong>{product.name}</strong>

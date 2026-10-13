@@ -312,11 +312,24 @@ table.data .num {
 }
 
 .tile-photo {
+  position: relative;
   min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: zoom-in;
+}
+
+.tile-stock {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #101914d9;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .tile-photo .pimg {
