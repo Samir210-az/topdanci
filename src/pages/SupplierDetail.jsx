@@ -80,6 +80,11 @@ export default function SupplierDetail() {
 
   if (!supplier) return <PageHeader title="Təchizatçı tapılmadı" back />
 
+  const goods = Object.entries(supplier.goods || {})
+    .map(([goodId, g]) => ({ id: goodId, ...g }))
+    .filter((g) => g.qty > 0)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'az'))
+
   function undo(fn) {
     if (!window.confirm('Bu əməliyyat ləğv edilsin?')) return
     try {
@@ -138,6 +143,26 @@ export default function SupplierDetail() {
           </button>
         </div>
       </section>
+
+      {goods.length > 0 && (
+        <section className="stack">
+          <h2>Bu təchizatçıdan alınan mallar</h2>
+          <div className="list">
+            {goods.map((g) => (
+              <div key={g.id} className="row">
+                <div className="grow">
+                  <strong>{g.name}</strong>
+                  <span className="muted small">Son alış qiyməti: {fmtMoney(g.lastCost)}</span>
+                </div>
+                <span className="badge muted-badge">
+                  {g.qty} {g.unit}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="muted small">Say bu təchizatçıdan bütün dövr üzrə alınan malı göstərir, qalıq deyil.</p>
+        </section>
+      )}
 
       <section className="stack">
         <h2>Tarixçə</h2>

@@ -349,6 +349,16 @@ export function createPurchase({ supplier, lines, paid, note = '', productMap })
   batch.set(ref, purchase)
   applyEffects(batch, { fx, party: { collection: 'suppliers', id: supplier.id }, reason: 'purchase', refId: ref.id, productMap, at })
   for (const line of items) batch.update(doc(db, 'products', line.productId), { cost: line.cost })
+
+  const goods = {}
+  for (const line of items) {
+    goods[`goods.${line.productId}.name`] = line.name
+    goods[`goods.${line.productId}.unit`] = line.unit
+    goods[`goods.${line.productId}.lastCost`] = line.cost
+    goods[`goods.${line.productId}.lastAt`] = at
+    goods[`goods.${line.productId}.qty`] = increment(line.qty)
+  }
+  batch.update(doc(db, 'suppliers', supplier.id), goods)
   commit(batch)
   return { id: ref.id, ...purchase }
 }
@@ -372,6 +382,9 @@ export function cancelPurchase({ purchase, productMap }) {
     productMap,
     at,
   })
+  const goods = {}
+  for (const line of purchase.items) goods[`goods.${line.productId}.qty`] = increment(-line.qty)
+  batch.update(doc(db, 'suppliers', purchase.supplierId), goods)
   commit(batch)
 }
 

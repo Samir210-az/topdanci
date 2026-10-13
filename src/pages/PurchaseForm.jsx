@@ -51,6 +51,12 @@ export default function PurchaseForm() {
   const [picking, setPicking] = useState(false)
   const [q, setQ] = useState('')
 
+  const defaultCost = (p) => {
+    const last = supplier?.id ? suppliers.find((x) => x.id === supplier.id)?.goods?.[p.id]?.lastCost : 0
+    const value = last || p.cost
+    return value ? fromQepik(value) : ''
+  }
+
   const total = useMemo(() => lines.reduce((sum, l) => sum + l.qty * toQepik(l.cost), 0), [lines])
   const paid = mode === 'full' ? total : mode === 'credit' ? 0 : toQepik(partial)
   const term = q.trim().toLocaleLowerCase('az')
@@ -154,7 +160,7 @@ export default function PurchaseForm() {
                 setLines((current) =>
                   current.some((l) => l.productId === p.id)
                     ? current
-                    : [...current, { productId: p.id, qty: 1, cost: p.cost ? fromQepik(p.cost) : '' }],
+                    : [...current, { productId: p.id, qty: 1, cost: defaultCost(p) }],
                 )
                 setPicking(false)
               }}
