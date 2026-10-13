@@ -79,3 +79,18 @@ export function qtyFromSupplier(product, supplierId) {
     .filter((lot) => lot.sid === supplierId)
     .reduce((total, lot) => total + lot.qty, 0)
 }
+
+export function takeFromSupplier(lots, supplierId, qty) {
+  const rest = merge(lots)
+  const taken = []
+  let left = qty
+  for (const lot of rest) {
+    if (left <= 0) break
+    if (lot.sid !== supplierId) continue
+    const cut = Math.min(lot.qty, left)
+    taken.push(mk(cut, lot.cost, lot.at, lot.sid))
+    lot.qty -= cut
+    left -= cut
+  }
+  return { taken, rest: rest.filter((l) => l.qty > 0), missing: left }
+}

@@ -1,7 +1,17 @@
 import { collection, doc, increment, Timestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
-import { LedgerError, planCancel, planPayment, planPurchase, planSale, planSettle } from './ledger'
-import { applyLots, lotsOf, takeOldest, totalCost, unitCost } from './lots'
+import {
+  holdUnit,
+  LedgerError,
+  planCancel,
+  planPayment,
+  planPurchase,
+  planReturnFromCustomer,
+  planReturnToSupplier,
+  planSale,
+  planSettle,
+} from './ledger'
+import { applyLots, lotsOf, takeFromSupplier, takeOldest, totalCost, unitCost } from './lots'
 import { dateKey } from './dates'
 import { reportError } from './events'
 
@@ -71,6 +81,9 @@ function applyEffects(batch, { fx, party, reason, refId, productMap, at }) {
   for (const [productId, delta] of Object.entries(fx.holdCost || {})) {
     patch[`holdCost.${productId}`] = increment(delta)
   }
+  for (const [productId, delta] of Object.entries(fx.holdValue || {})) {
+    patch[`holdValue.${productId}`] = increment(delta)
+  }
   if (party && Object.keys(patch).length) {
     batch.update(doc(db, party.collection, party.id), patch)
   }
@@ -108,6 +121,8 @@ export function createSale({ customer, lines, type, paid, note = '', productMap 
   const fx = { ...plan.fx, lotsOut }
   if (type === 'consign') {
     fx.holdCost = Object.fromEntries(Object.entries(lotsOut).map(([id, taken]) => [id, totalCost(taken)]))
+    fx.holdValue = {}
+    for (const line of items) fx.holdValue[line.productId] = (fx.holdValue[line.productId] || 0) + line.qty * line.price
   }
 
   const { at, key } = stamp()
@@ -147,7 +162,12 @@ export function settleConsignment({ customer, sold, returned, paid, note = '', p
     const product = productMap[line.productId]
     return { productId: line.productId, name: product?.name || '', unit: product?.unit || '', qty: line.qty }
   })
-  const plan = planSettle({ holdings, sold: soldItems, returned: returnedItems, paid })
+  const unitValue = {}
+  for (const line of [...soldItems, ...returnedItems]) {
+    const unit = holdUnit(customer, line.productId)
+    if (unit != null) unitValue[line.productId] = unit
+  }
+  const plan = planSettle({ holdings, sold: soldItems, returned: returnedItems, paid, unitValue })
 
   const used = {}
   for (const line of [...soldItems, ...returnedItems]) used[line.productId] = (used[line.productId] || 0) + line.qty
@@ -157,12 +177,20 @@ export function settleConsignment({ customer, sold, returned, paid, note = '', p
     holdCost[productId] = -(qty >= held ? total : Math.min(total, qty * unit))
   }
 
+  const holdValue = {}
+  for (const [productId, qty] of Object.entries(used)) {
+    const total = customer.holdValue?.[productId]
+    if (total == null) continue
+    const held = holdings[productId] || 0
+    holdValue[productId] = -(qty >= held ? total : Math.min(total, qty * unitValue[productId]))
+  }
+
   const lotsIn = {}
   for (const line of returnedItems) {
     const { unit } = unitOf(line.productId)
     ;(lotsIn[line.productId] ||= []).push({ qty: line.qty, cost: unit, at: 0 })
   }
-  const fx = { ...plan.fx, lotsIn, holdCost }
+  const fx = { ...plan.fx, lotsIn, holdCost, holdValue }
 
   const { at, key } = stamp()
   const ref = doc(collection(db, 'sales'))
@@ -383,7 +411,8 @@ export function cancelPurchase({ purchase, productMap }) {
     at,
   })
   const goods = {}
-  for (const line of purchase.items) goods[`goods.${line.productId}.qty`] = increment(-line.qty)
+  const sign = purchase.kind === 'return' ? 1 : -1
+  for (const line of purchase.items) goods[`goods.${line.productId}.qty`] = increment(sign * line.qty)
   batch.update(doc(db, 'suppliers', purchase.supplierId), goods)
   commit(batch)
 }
@@ -419,4 +448,105 @@ export function cancelSupplierPayment({ payment }) {
   batch.update(doc(db, 'supplierPayments', payment.id), { canceled: true, canceledAt: at })
   batch.update(doc(db, 'suppliers', payment.supplierId), { balance: increment(undo.balance) })
   commit(batch)
+}
+
+export function returnFromCustomer({ customer, lines, note = '', productMap, sales }) {
+  const recent = (productId) =>
+    sales.find(
+      (sale) =>
+        sale.customerId === customer.id &&
+        !sale.canceled &&
+        sale.type !== 'return' &&
+        sale.items.some((l) => l.productId === productId),
+    )?.items.find((l) => l.productId === productId)
+
+  const items = lines.map((line) => {
+    const product = productMap[line.productId]
+    if (!product) throw new LedgerError('Mal tapılmadı. Siyahını yeniləyib yenidən yoxla')
+    const last = recent(line.productId)
+    return {
+      productId: line.productId,
+      name: product.name,
+      unit: product.unit,
+      qty: line.qty,
+      price: line.price,
+      cost: last?.cost ?? product.cost ?? 0,
+    }
+  })
+  const plan = planReturnFromCustomer({ items })
+
+  const lotsIn = {}
+  for (const line of items) (lotsIn[line.productId] ||= []).push({ qty: line.qty, cost: line.cost, at: 0 })
+  const fx = { ...plan.fx, lotsIn }
+
+  const { at, key } = stamp()
+  const ref = doc(collection(db, 'sales'))
+  const sale = {
+    type: 'return',
+    customerId: customer.id,
+    customerName: customer.name,
+    items,
+    total: plan.total,
+    paid: 0,
+    balanceDelta: plan.fx.balance,
+    fx,
+    note,
+    canceled: false,
+    createdAt: at,
+    dateKey: key,
+  }
+
+  const batch = writeBatch(db)
+  batch.set(ref, sale)
+  applyEffects(batch, { fx, party: { collection: 'customers', id: customer.id }, reason: 'return', refId: ref.id, productMap, at })
+  commit(batch)
+  return { id: ref.id, ...sale }
+}
+
+export function returnToSupplier({ supplier, lines, note = '', productMap }) {
+  const work = {}
+  const lotsOut = {}
+  const items = []
+  const costs = []
+
+  for (const line of lines) {
+    const product = productMap[line.productId]
+    if (!product) throw new LedgerError('Mal tapılmadı. Siyahını yeniləyib yenidən yoxla')
+    const { taken, rest, missing } = takeFromSupplier(work[line.productId] ?? lotsOf(product), supplier.id, line.qty)
+    if (missing > 0) {
+      throw new LedgerError(`“${product.name}” bu təchizatçıdan bu qədər qalmayıb`)
+    }
+    work[line.productId] = rest
+    lotsOut[line.productId] = [...(lotsOut[line.productId] || []), ...taken]
+    costs.push(totalCost(taken))
+    items.push({ productId: line.productId, name: product.name, unit: product.unit, qty: line.qty, cost: unitCost(taken) })
+  }
+
+  const plan = planReturnToSupplier({ items, costs })
+  const fx = { ...plan.fx, lotsOut }
+
+  const { at, key } = stamp()
+  const ref = doc(collection(db, 'purchases'))
+  const record = {
+    kind: 'return',
+    supplierId: supplier.id,
+    supplierName: supplier.name,
+    items,
+    total: plan.total,
+    paid: 0,
+    fx,
+    note,
+    canceled: false,
+    createdAt: at,
+    dateKey: key,
+  }
+
+  const batch = writeBatch(db)
+  batch.set(ref, record)
+  applyEffects(batch, { fx, party: { collection: 'suppliers', id: supplier.id }, reason: 'return', refId: ref.id, productMap, at })
+  const goods = {}
+  for (const line of items) goods[`goods.${line.productId}.qty`] = increment(-line.qty)
+  batch.update(doc(db, 'suppliers', supplier.id), goods)
+  commit(batch)
+  return { id: ref.id, ...record }
 }

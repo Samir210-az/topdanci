@@ -39,23 +39,24 @@ test('ödənilən məbləğ cəmdən çox ola bilməz', () => {
   )
 })
 
-test('satışa verilən malda borc yazılmır, mal müştəridə qalır', () => {
-  const plan = planSale({ type: 'consign', items: [item(10)], stockOf: { a: 10 } })
-  assert.equal(plan.fx.balance, 0)
-  assert.equal(plan.paid, 0)
+test('satışa verilən mal borca yazılır və müştəridə qalır', () => {
+  const plan = planSale({ type: 'consign', items: [item(10)], paid: 2000, stockOf: { a: 10 } })
+  assert.equal(plan.fx.balance, 8000)
+  assert.equal(plan.paid, 2000)
   assert.deepEqual(plan.fx.stock, { a: -10 })
   assert.deepEqual(plan.fx.holdings, { a: 10 })
 })
 
-test('satışa verilən malın hesablaşması: satılan borca, qaytarılan anbara yazılır', () => {
+test('satışa verilən malın hesablaşması: qaytarılan hissə borcdan çıxır, satılan artıq borcdadır', () => {
   const plan = planSettle({
     holdings: { a: 10 },
     sold: [item(6)],
     returned: [{ productId: 'a', name: 'Çay', qty: 3 }],
     paid: 2000,
+    unitValue: { a: 1000 },
   })
   assert.equal(plan.total, 6000)
-  assert.equal(plan.fx.balance, 4000)
+  assert.equal(plan.fx.balance, -5000)
   assert.deepEqual(plan.fx.stock, { a: 3 })
   assert.deepEqual(plan.fx.holdings, { a: -9 })
 })
@@ -97,6 +98,7 @@ test('həllin ləğvi qaytarılan mal artıq satılıbsa bloklanır', () => {
     sold: [item(6)],
     returned: [{ productId: 'a', name: 'Çay', qty: 3 }],
     paid: 6000,
+    unitValue: { a: 1000 },
   })
   assert.throws(() => planCancel({ fx: plan.fx, stockOf: { a: 1 }, holdingsOf: {} }), /Ləğv etmək olmur/)
   const undo = planCancel({ fx: plan.fx, stockOf: { a: 3 }, holdingsOf: {} })
@@ -135,4 +137,34 @@ test('alış ləğv: mal artıq satılıbsa, ləğv olunmur', () => {
     () => planCancel({ fx: { stock: { a: 10 }, holdings: {}, balance: 5000 }, stockOf: { a: 4 }, holdingsOf: {} }),
     LedgerError,
   )
+})
+
+test('hesablaşmada satış qiyməti dəyişibsə, fərq borca əlavə olunur', () => {
+  const plan = planSettle({
+    holdings: { a: 10 },
+    sold: [{ productId: 'a', name: 'Çay', qty: 4, price: 1200 }],
+    returned: [],
+    unitValue: { a: 1000 },
+  })
+  assert.equal(plan.fx.balance, 800)
+})
+
+test('köhnə qeydlərdə (borca yazılmamış) satılan hissə borca əlavə olunur', () => {
+  const plan = planSettle({ holdings: { a: 10 }, sold: [item(3)], returned: [], unitValue: {} })
+  assert.equal(plan.fx.balance, 3000)
+})
+
+test('müştərinin qaytardığı mal anbara yazılır, borc azalır', async () => {
+  const { planReturnFromCustomer } = await import('./ledger.js')
+  const plan = planReturnFromCustomer({ items: [item(3, 1200)] })
+  assert.equal(plan.total, 3600)
+  assert.equal(plan.fx.balance, -3600)
+  assert.deepEqual(plan.fx.stock, { a: 3 })
+})
+
+test('təchizatçıya qaytarma anbarı azaldır, borcumuzu alış qiyməti ilə azaldır', async () => {
+  const { planReturnToSupplier } = await import('./ledger.js')
+  const plan = planReturnToSupplier({ items: [{ productId: 'a', name: 'Çay', qty: 4 }], costs: [2000] })
+  assert.equal(plan.fx.balance, -2000)
+  assert.deepEqual(plan.fx.stock, { a: -4 })
 })

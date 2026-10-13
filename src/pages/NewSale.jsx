@@ -153,7 +153,7 @@ export default function NewSale() {
   const customer = cart.customerId ? customerMap[cart.customerId] : null
   const total = useMemo(() => cart.lines.reduce((sum, l) => sum + l.qty * l.price, 0), [cart.lines])
   const consign = cart.type === 'consign'
-  const paid = consign ? 0 : mode === 'full' ? total : mode === 'credit' ? 0 : toQepik(partial)
+  const paid = mode === 'full' ? total : mode === 'credit' ? 0 : toQepik(partial)
 
   function submit() {
     if (!customer) return notify('Müştəri seç', 'error')
@@ -196,7 +196,7 @@ export default function NewSale() {
         ]}
       />
       {consign && (
-        <p className="muted small">Mal müştəridə qalır, pul borc yazılmır. Satılanda “Hesablaşma” ilə qeyd edəcəksən.</p>
+        <p className="muted small">Mal müştəridə qalır, qiyməti borca yazılır. Satılanda “Hesablaşma”, satılmayanı qaytaranda “Mal qaytarma” ilə qeyd edəcəksən.</p>
       )}
 
       {cart.lines.length === 0 ? (
@@ -222,24 +222,20 @@ export default function NewSale() {
 
       {cart.lines.length > 0 && (
         <>
-          {!consign && (
-            <>
-              <Segmented
-                label="Ödəniş"
-                value={mode}
-                onChange={setMode}
-                options={[
-                  { value: 'full', label: 'Tam' },
-                  { value: 'partial', label: 'Qismən' },
-                  { value: 'credit', label: 'Nisyə' },
-                ]}
-              />
-              {mode === 'partial' && (
-                <Field label="Alınan məbləğ, ₼">
-                  <MoneyInput value={partial} onChange={setPartial} />
-                </Field>
-              )}
-            </>
+          <Segmented
+            label="Ödəniş"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'full', label: 'Tam' },
+              { value: 'partial', label: 'Qismən' },
+              { value: 'credit', label: 'Nisyə' },
+            ]}
+          />
+          {mode === 'partial' && (
+            <Field label="Alınan məbləğ, ₼">
+              <MoneyInput value={partial} onChange={setPartial} />
+            </Field>
           )}
 
           <Field label="Qeyd">
@@ -251,18 +247,14 @@ export default function NewSale() {
               <span>Cəmi</span>
               <span>{fmtMoney(total)}</span>
             </div>
-            {!consign && (
-              <>
-                <div>
-                  <span>Ödənilir</span>
-                  <span>{fmtMoney(paid)}</span>
-                </div>
-                <div>
-                  <span>Borc qalır</span>
-                  <span className={total - paid > 0 ? 'amount-neg' : ''}>{fmtMoney(Math.max(total - paid, 0))}</span>
-                </div>
-              </>
-            )}
+            <div>
+              <span>Ödənilir</span>
+              <span>{fmtMoney(paid)}</span>
+            </div>
+            <div>
+              <span>Borca yazılır</span>
+              <span className={total - paid > 0 ? 'amount-neg' : ''}>{fmtMoney(Math.max(total - paid, 0))}</span>
+            </div>
           </div>
 
           <div className="sticky-action">

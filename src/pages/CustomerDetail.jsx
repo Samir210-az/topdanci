@@ -11,7 +11,7 @@ import { fmtDateTime, toDate } from '../lib/dates'
 import { buildReceipt, sendText, telLink, waLink } from '../lib/share'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
-const TYPE_LABEL = { sale: 'Satış', consign: 'Satışa verilən', settle: 'Hesablaşma' }
+const TYPE_LABEL = { sale: 'Satış', consign: 'Satışa verilən', settle: 'Hesablaşma', return: 'Mal qaytarma' }
 
 function PaymentSheet({ open, customer, onClose }) {
   const [amount, setAmount] = useState('')
@@ -145,6 +145,9 @@ export default function CustomerDetail() {
             Ödəniş al
           </button>
         </div>
+        <Link className="btn block" to={`/customers/${id}/return`}>
+          Mal qaytarma
+        </Link>
       </section>
 
       {holdings.length > 0 && (
@@ -184,8 +187,8 @@ export default function CustomerDetail() {
               {doc.canceled ? (
                 <span className="badge muted-badge">Ləğv edilib</span>
               ) : (
-                <b className={kind === 'payment' ? 'amount-pos' : ''}>
-                  {kind === 'payment' ? '+' : ''}
+                <b className={kind === 'payment' || doc.type === 'return' ? 'amount-pos' : ''}>
+                  {kind === 'payment' || doc.type === 'return' ? '−' : ''}
                   {fmtMoney(kind === 'payment' ? doc.amount : doc.total)}
                 </b>
               )}
@@ -196,7 +199,7 @@ export default function CustomerDetail() {
                   {doc.items.map((l) => `${l.name} ×${l.qty}`).join(', ')}
                   {doc.returned?.length ? ` · qaytarılıb: ${doc.returned.map((l) => `${l.name} ×${l.qty}`).join(', ')}` : ''}
                 </p>
-                {doc.type !== 'consign' && !doc.canceled && (
+                {doc.type !== 'return' && !doc.canceled && (
                   <p className="small">
                     Ödənilib {fmtMoney(doc.paid)}
                     {doc.total > doc.paid && <span className="amount-neg"> · qalıq {fmtMoney(doc.total - doc.paid)}</span>}

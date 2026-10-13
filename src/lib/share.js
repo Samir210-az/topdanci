@@ -20,7 +20,7 @@ export function waLink(raw, text = '') {
   return `https://wa.me/${digits}${query}`
 }
 
-const TITLES = { sale: 'Qaimə', consign: 'Satışa verilən mal qaiməsi', settle: 'Hesablaşma' }
+const TITLES = { sale: 'Qaimə', consign: 'Satışa verilən mal qaiməsi', settle: 'Hesablaşma', return: 'Mal qaytarma aktı' }
 
 export function buildReceipt(sale, balance) {
   const rows = sale.items.map(
@@ -40,7 +40,7 @@ export function buildReceipt(sale, balance) {
   }
 
   out.push('', `Cəmi: ${fmtMoney(sale.total)}`)
-  if (sale.type !== 'consign') {
+  if (sale.type !== 'return') {
     out.push(`Ödənilib: ${fmtMoney(sale.paid)}`)
     if (sale.total - sale.paid > 0) out.push(`Bu qaimə üzrə qalıq: ${fmtMoney(sale.total - sale.paid)}`)
   }

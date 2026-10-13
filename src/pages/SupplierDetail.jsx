@@ -82,7 +82,9 @@ export default function SupplierDetail() {
 
   const period = useMemo(() => {
     const from = dateKey(addDays(startOfDay(), -(days - 1)))
-    const bought = purchases.filter((p) => p.supplierId === id && !p.canceled && p.dateKey >= from)
+    const inPeriod = purchases.filter((p) => p.supplierId === id && !p.canceled && p.dateKey >= from)
+    const bought = inPeriod.filter((p) => p.kind !== 'return')
+    const returned = inPeriod.filter((p) => p.kind === 'return')
     const paid = supplierPayments.filter((p) => p.supplierId === id && !p.canceled && p.dateKey >= from)
     const qty = {}
     for (const purchase of bought) {
@@ -91,6 +93,7 @@ export default function SupplierDetail() {
     return {
       qty,
       total: bought.reduce((sum, p) => sum + p.total, 0),
+      returned: returned.reduce((sum, p) => sum + p.total, 0),
       paid: bought.reduce((sum, p) => sum + p.paid, 0) + paid.reduce((sum, p) => sum + p.amount, 0),
       count: bought.length,
     }
@@ -159,6 +162,9 @@ export default function SupplierDetail() {
           <button type="button" className="btn accent" onClick={() => setPaying(true)}>
             Ödəniş et
           </button>
+          <Link className="btn" to={`/suppliers/${id}/return`}>
+            Malı qaytar
+          </Link>
         </div>
       </section>
 
@@ -175,6 +181,12 @@ export default function SupplierDetail() {
             <span>Alınıb ({period.count} alış)</span>
             <strong>{fmtMoney(period.total)}</strong>
           </div>
+          {period.returned > 0 && (
+            <div className="stat">
+              <span>Qaytarılıb</span>
+              <strong>{fmtMoney(period.returned)}</strong>
+            </div>
+          )}
           <div className="stat">
             <span>Ödənilib</span>
             <strong>{fmtMoney(period.paid)}</strong>
@@ -214,19 +226,19 @@ export default function SupplierDetail() {
           <div key={`${kind}-${doc.id}`} className="card stack" style={{ opacity: doc.canceled ? 0.55 : 1 }}>
             <div className="row" style={{ border: 0, padding: 0 }}>
               <div className="grow">
-                <strong>{kind === 'purchase' ? 'Alış' : `Ödəniş · ${doc.method}`}</strong>
+                <strong>{kind === 'payment' ? `Ödəniş · ${doc.method}` : doc.kind === 'return' ? 'Qaytarma' : 'Alış'}</strong>
                 <span className="muted small">{fmtDateTime(at)}</span>
               </div>
               {doc.canceled ? (
                 <span className="badge muted-badge">Ləğv edilib</span>
               ) : (
-                <b>{fmtMoney(kind === 'purchase' ? doc.total : doc.amount)}</b>
+                <b>{kind === 'payment' ? fmtMoney(doc.amount) : `${doc.kind === 'return' ? '−' : ''}${fmtMoney(doc.total)}`}</b>
               )}
             </div>
             {kind === 'purchase' && (
               <p className="muted small">
                 {doc.items.map((l) => `${l.name} ×${l.qty} (${fmtMoney(l.cost)})`).join(', ')}
-                {!doc.canceled && ` · ödənilib ${fmtMoney(doc.paid)}`}
+                {!doc.canceled && doc.kind !== 'return' && ` · ödənilib ${fmtMoney(doc.paid)}`}
               </p>
             )}
             {!doc.canceled && (

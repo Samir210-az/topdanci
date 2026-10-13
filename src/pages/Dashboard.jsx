@@ -6,7 +6,7 @@ import { useData } from '../store/DataContext'
 import { dateKey, toDate, fmtTime } from '../lib/dates'
 import { fmtMoney } from '../lib/money'
 
-const TYPE_LABEL = { sale: 'satış', consign: 'satışa verilən', settle: 'hesablaşma' }
+const TYPE_LABEL = { sale: 'satış', consign: 'satışa verilən', settle: 'hesablaşma', return: 'qaytarma' }
 
 export default function Dashboard() {
   const { sales, payments, customers, suppliers, products, productMap } = useData()
@@ -18,7 +18,10 @@ export default function Dashboard() {
     const live = sales.filter((s) => !s.canceled)
     const inPeriod = live.filter((s) => s.dateKey >= from)
 
-    const revenue = inPeriod.filter((s) => s.type !== 'consign').reduce((sum, s) => sum + s.total, 0)
+    const revenue = inPeriod.reduce(
+      (sum, s) => (s.type === 'consign' ? sum : s.type === 'return' ? sum - s.total : sum + s.total),
+      0,
+    )
     const consigned = inPeriod.filter((s) => s.type === 'consign').reduce((sum, s) => sum + s.total, 0)
     const collected =
       inPeriod.reduce((sum, s) => sum + (s.paid || 0), 0) +
@@ -130,7 +133,7 @@ export default function Dashboard() {
             <strong>{fmtMoney(view.owed)}</strong>
           </Link>
           <Link to="/reports" className="stat">
-            <span>Müştərilərdə mal</span>
+            <span>Müştərilərdə mal (borca daxildir)</span>
             <strong>{fmtMoney(view.atCustomers)}</strong>
           </Link>
         </div>

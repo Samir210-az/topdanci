@@ -56,15 +56,19 @@ export function planSale({ type, items, paid = 0, stockOf }) {
 
   const total = itemsTotal(items)
 
-  if (type === 'consign') {
-    return { total, paid: 0, fx: { stock: negate(need), holdings: need, balance: 0 } }
-  }
-
   assertPaid(paid, total)
-  return { total, paid, fx: { stock: negate(need), holdings: {}, balance: total - paid } }
+  const holdings = type === 'consign' ? need : {}
+  return { total, paid, fx: { stock: negate(need), holdings, balance: total - paid } }
 }
 
-export function planSettle({ holdings, sold, returned, paid = 0 }) {
+export function holdUnit(customer, productId) {
+  const value = customer.holdValue?.[productId]
+  if (value == null) return null
+  const held = customer.holdings?.[productId] || 0
+  return held ? Math.round(value / held) : 0
+}
+
+export function planSettle({ holdings, sold, returned, paid = 0, unitValue = {} }) {
   if (!sold.length && !returned.length) {
     throw new LedgerError('Satılan və ya qaytarılan mal göstərilməyib')
   }
@@ -74,6 +78,7 @@ export function planSettle({ holdings, sold, returned, paid = 0 }) {
       throw new LedgerError(`“${line.name}” üçün qaytarılan say düzgün deyil`)
     }
   }
+  if (!isInt(paid) || paid < 0) throw new LedgerError('Ödənilən məbləğ düzgün deyil')
 
   const soldQty = sumByProduct(sold)
   const returnedQty = sumByProduct(returned)
@@ -86,9 +91,17 @@ export function planSettle({ holdings, sold, returned, paid = 0 }) {
     holdingsFx[productId] = -used
   }
 
-  const total = itemsTotal(sold)
-  assertPaid(paid, total)
-  return { total, paid, fx: { stock: returnedQty, holdings: holdingsFx, balance: total - paid } }
+  let balance = -paid
+  for (const line of sold) {
+    const given = unitValue[line.productId]
+    balance += given == null ? line.qty * line.price : line.qty * (line.price - given)
+  }
+  for (const line of returned) {
+    const given = unitValue[line.productId]
+    if (given != null) balance -= line.qty * given
+  }
+
+  return { total: itemsTotal(sold), paid, fx: { stock: returnedQty, holdings: holdingsFx, balance } }
 }
 
 export function planPayment({ amount }) {
@@ -118,6 +131,7 @@ export function planCancel({ fx, stockOf, holdingsOf }) {
     lotsOut: fx.lotsIn || {},
     lotsIn: fx.lotsOut || {},
     holdCost: negate(fx.holdCost || {}),
+    holdValue: negate(fx.holdValue || {}),
   }
 }
 
@@ -130,4 +144,20 @@ export function planPurchase({ items, paid = 0 }) {
   const total = items.reduce((sum, line) => sum + line.qty * line.cost, 0)
   assertPaid(paid, total)
   return { total, paid, fx: { stock: sumByProduct(items), holdings: {}, balance: total - paid } }
+}
+
+export function planReturnFromCustomer({ items }) {
+  if (!items.length) throw new LedgerError('Qaytarılan mal seçilməyib')
+  assertLines(items)
+  const total = itemsTotal(items)
+  return { total, fx: { stock: sumByProduct(items), holdings: {}, balance: -total } }
+}
+
+export function planReturnToSupplier({ items, costs }) {
+  if (!items.length) throw new LedgerError('Qaytarılan mal seçilməyib')
+  for (const line of items) {
+    if (!isInt(line.qty) || line.qty <= 0) throw new LedgerError(`“${line.name}” üçün say düzgün deyil`)
+  }
+  const total = costs.reduce((sum, value) => sum + value, 0)
+  return { total, fx: { stock: negate(sumByProduct(items)), holdings: {}, balance: -total } }
 }

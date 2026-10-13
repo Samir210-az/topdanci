@@ -34,13 +34,12 @@ function Sales({ days }) {
   const report = useMemo(() => {
     const from = dateKey(addDays(startOfDay(), -(days - 1)))
     const rows = sales.filter((s) => s.dateKey >= from && !s.canceled)
-    const real = rows.filter((s) => s.type !== 'consign')
-    const revenue = real.reduce((sum, s) => sum + s.total, 0)
-    const profit = real.reduce(
-      (sum, s) => sum + s.items.reduce((p, l) => p + l.qty * (l.price - (l.cost || 0)), 0),
-      0,
-    )
-    const newDebt = real.reduce((sum, s) => sum + (s.total - s.paid), 0)
+    const real = rows.filter((s) => s.type === 'sale' || s.type === 'settle')
+    const back = rows.filter((s) => s.type === 'return')
+    const margin = (s) => s.items.reduce((p, l) => p + l.qty * (l.price - (l.cost || 0)), 0)
+    const revenue = real.reduce((sum, s) => sum + s.total, 0) - back.reduce((sum, s) => sum + s.total, 0)
+    const profit = real.reduce((sum, s) => sum + margin(s), 0) - back.reduce((sum, s) => sum + margin(s), 0)
+    const newDebt = rows.reduce((sum, s) => sum + Math.max(s.fx?.balance ?? s.total - s.paid, 0), 0)
     const collected =
       rows.reduce((sum, s) => sum + (s.paid || 0), 0) +
       payments.filter((p) => p.dateKey >= from && !p.canceled).reduce((sum, p) => sum + p.amount, 0)
@@ -86,7 +85,7 @@ function Sales({ days }) {
           <strong>{fmtMoney(report.profit)}</strong>
         </div>
       </div>
-      <p className="muted small">Mənfəət satış anındakı alış qiymətinə görə hesablanır. Satışa verilən mal satış sayılmır.</p>
+      <p className="muted small">Mənfəət satış anındakı alış qiymətinə görə hesablanır. Satışa verilən mal satılanda satış sayılır, qaytarılan mal çıxılır.</p>
 
       <h2>Ən çox satılanlar</h2>
       {report.top.length === 0 ? (

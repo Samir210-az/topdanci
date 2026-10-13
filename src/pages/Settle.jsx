@@ -5,6 +5,7 @@ import { useData } from '../store/DataContext'
 import { settleConsignment } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, toQepik } from '../lib/money'
+import { holdUnit } from '../lib/ledger'
 
 function Editor({ customer }) {
   const navigate = useNavigate()
@@ -18,8 +19,17 @@ function Editor({ customer }) {
   const [prices, setPrices] = useState({})
   const [paid, setPaid] = useState('')
 
-  const priceOf = (h) => (prices[h.productId] !== undefined ? toQepik(prices[h.productId]) : h.product?.price || 0)
+  const givenOf = (h) => holdUnit(customer, h.productId)
+  const defaultPrice = (h) => givenOf(h) ?? h.product?.price ?? 0
+  const priceOf = (h) => (prices[h.productId] !== undefined ? toQepik(prices[h.productId]) : defaultPrice(h))
   const total = held.reduce((sum, h) => sum + (sold[h.productId] || 0) * priceOf(h), 0)
+  const debtChange = held.reduce((sum, h) => {
+    const given = givenOf(h)
+    const soldQty = sold[h.productId] || 0
+    const backQty = returned[h.productId] || 0
+    if (given == null) return sum + soldQty * priceOf(h)
+    return sum + soldQty * (priceOf(h) - given) - backQty * given
+  }, 0) - toQepik(paid)
 
   function submit() {
     const soldLines = held
@@ -79,7 +89,7 @@ function Editor({ customer }) {
                 <div className="line-bottom">
                   <span>Vahid qiyməti, ₼</span>
                   <MoneyInput
-                    value={prices[h.productId] ?? String((h.product?.price || 0) / 100)}
+                    value={prices[h.productId] ?? String(defaultPrice(h) / 100)}
                     onChange={(value) => setPrices((p) => ({ ...p, [h.productId]: value }))}
                   />
                 </div>
@@ -90,18 +100,18 @@ function Editor({ customer }) {
         })}
       </div>
 
-      <Field label="Alınan məbləğ, ₼" hint="Satılan malın pulundan neçəsi indi ödənir">
+      <Field label="Müştəri indi nə qədər ödəyir, ₼" hint="Mal artıq borca yazılıb. Bu məbləğ borcdan çıxılır">
         <MoneyInput value={paid} onChange={setPaid} />
       </Field>
 
       <div className="summary">
         <div className="total">
-          <span>Satılan malın dəyəri</span>
+          <span>Satılan malın məbləği</span>
           <span>{fmtMoney(total)}</span>
         </div>
         <div>
-          <span>Borc yazılır</span>
-          <span>{fmtMoney(Math.max(total - toQepik(paid), 0))}</span>
+          <span>{debtChange < 0 ? 'Borc azalır' : 'Borca əlavə olunur'}</span>
+          <span>{fmtMoney(Math.abs(debtChange))}</span>
         </div>
       </div>
 
