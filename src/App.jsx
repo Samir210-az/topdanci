@@ -14,7 +14,7 @@ import CustomerDetail from './pages/CustomerDetail'
 import Settle from './pages/Settle'
 import NewSale from './pages/NewSale'
 import Settings from './pages/Settings'
-import Purchases from './pages/Purchases'
+import Suppliers from './pages/Suppliers'
 import PurchaseForm from './pages/PurchaseForm'
 import SupplierDetail from './pages/SupplierDetail'
 import SupplierForm from './pages/SupplierForm'
@@ -54,7 +54,8 @@ export default function App() {
               <Route path="customers/:id" element={<CustomerDetail />} />
               <Route path="customers/:id/edit" element={<CustomerForm />} />
               <Route path="customers/:id/settle" element={<Settle />} />
-              <Route path="purchases" element={<Purchases />} />
+              <Route path="suppliers" element={<Suppliers />} />
+              <Route path="purchases" element={<Navigate to="/suppliers" replace />} />
               <Route path="purchases/new" element={<PurchaseForm />} />
               <Route path="suppliers/new" element={<SupplierForm />} />
               <Route path="suppliers/:id" element={<SupplierDetail />} />

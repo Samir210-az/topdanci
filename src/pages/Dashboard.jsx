@@ -52,7 +52,7 @@ export default function Dashboard() {
           <span>Müştərilərdə mal</span>
           <strong>{fmtMoney(view.atCustomers)}</strong>
         </Link>
-        <Link to="/purchases" className="stat">
+        <Link to="/suppliers" className="stat">
           <span>Təchizatçılara borcum</span>
           <strong>{fmtMoney(view.owed)}</strong>
         </Link>
@@ -75,7 +75,7 @@ export default function Dashboard() {
         <Link to="/purchases/new" className="btn">
           <Icon name="box" /> Mal alışı
         </Link>
-        <Link to="/purchases" className="btn">
+        <Link to="/suppliers" className="btn">
           <Icon name="download" /> Təchizatçılar
         </Link>
         <Link to="/reports" className="btn">

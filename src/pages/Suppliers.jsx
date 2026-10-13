@@ -4,22 +4,22 @@ import { Empty, PageHeader } from '../components/ui'
 import { useData } from '../store/DataContext'
 import { fmtMoney } from '../lib/money'
 
-export default function Purchases() {
+export default function Suppliers() {
   const { suppliers } = useData()
   const owed = suppliers.reduce((sum, s) => sum + Math.max(s.balance || 0, 0), 0)
 
   return (
     <>
       <PageHeader
-        title="Alış"
+        title="Təchizatçılar"
         back
         actions={
           <>
-            <Link to="/suppliers/new" className="btn sm">
-              Təchizatçı
+            <Link to="/purchases/new" className="btn sm">
+              Mal alışı
             </Link>
-            <Link to="/purchases/new" className="btn sm primary">
-              <Icon name="plus" size={18} /> Yeni alış
+            <Link to="/suppliers/new" className="btn sm primary">
+              <Icon name="plus" size={18} /> Yeni
             </Link>
           </>
         }

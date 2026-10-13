@@ -69,7 +69,7 @@ export default function PurchaseForm() {
         productMap,
       })
       notify('Alış qeyd edildi', 'success')
-      navigate('/purchases', { replace: true })
+      navigate(`/suppliers/${supplier.id}`, { replace: true })
     } catch (error) {
       reportError(error)
     }
