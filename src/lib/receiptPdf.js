@@ -7,6 +7,7 @@ const M = 70
 const FONT = '"Roboto","Segoe UI",Arial,sans-serif'
 const INK = '#14201c'
 const GREY = '#5b6661'
+const GREEN = '#17463a'
 const LINE = '#cfd6d2'
 
 const TITLES = { sale: 'QAIMƏ', consign: 'SATIŞA VERİLƏN MAL', settle: 'HESABLAŞMA' }
@@ -51,19 +52,37 @@ function loadImage(src) {
   })
 }
 
+function wordmark(ctx, baseline) {
+  const parts = [
+    ['TOP', INK],
+    ['DANÇI', GREEN],
+  ]
+  const tight = -4
+  ctx.font = `900 112px ${FONT}`
+  ctx.textAlign = 'left'
+  const chars = parts.flatMap(([text, color]) => [...text].map((ch) => ({ ch, color, w: ctx.measureText(ch).width })))
+  const total = chars.reduce((sum, c) => sum + c.w + tight, -tight)
+  let x = (W - total) / 2
+  for (const c of chars) {
+    ctx.fillStyle = c.color
+    ctx.fillText(c.ch, x, baseline)
+    x += c.w + tight
+  }
+  ctx.fillStyle = GREEN
+  ctx.fillRect((W - total) / 2, baseline + 16, total, 7)
+}
+
 function paint(ctx, d, signature) {
   let y = M
   ctx.textBaseline = 'alphabetic'
 
-  ctx.fillStyle = INK
-  ctx.textAlign = 'center'
-  ctx.font = `800 104px ${FONT}`
-  y += 90
-  ctx.fillText('TOPDANÇI', W / 2, y)
+  y += 92
+  wordmark(ctx, y)
 
   ctx.font = `600 34px ${FONT}`
   ctx.fillStyle = GREY
-  y += 52
+  ctx.textAlign = 'center'
+  y += 62
   ctx.fillText(d.title, W / 2, y)
 
   ctx.font = `600 40px ${FONT}`
