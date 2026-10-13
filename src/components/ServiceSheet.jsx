@@ -24,10 +24,13 @@ export default function ServiceSheet({ open, onClose }) {
   const [code, setCode] = useState('')
   const [unlocked, setUnlocked] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [step, setStep] = useState('')
+  const [message, setMessage] = useState('')
 
   function close() {
     setCode('')
     setUnlocked(false)
+    setMessage('')
     onClose()
   }
 
@@ -40,17 +43,22 @@ export default function ServiceSheet({ open, onClose }) {
   async function run(action) {
     if (!window.confirm(action.confirm)) return
     setBusy(true)
+    setMessage('')
     try {
-      await resetData(action.scope)
+      await resetData(action.scope, setStep)
       notify('Sıfırlama tamamlandı', 'success')
       close()
     } catch (error) {
-      notify(
-        error.message === 'offline' ? 'İnternet yoxdur. Sıfırlama üçün internet lazımdır.' : 'Sıfırlama alınmadı. Yenidən yoxla.',
-        'error',
-      )
+      const tag = error.message || ''
+      let text = 'Sıfırlama alınmadı. Yenidən yoxla.'
+      if (tag === 'offline') text = 'İnternet yoxdur. Sıfırlama üçün internet lazımdır.'
+      else if (tag.startsWith('read:')) text = `Server cavab vermədi (${tag.slice(5)}). İnterneti yoxla, tətbiqin digər pəncərələrini bağla və yenidən yoxla.`
+      else if (tag === 'write') text = 'Silmə sorğusu göndərildi, amma təsdiq gəlmədi. Bir az gözlə, sonra Əsas səhifədə rəqəmlərə bax.'
+      else if (error.code === 'permission-denied') text = 'İcazə yoxdur. Yenidən daxil ol.'
+      setMessage(text)
     } finally {
       setBusy(false)
+      setStep('')
     }
   }
 
@@ -77,10 +85,15 @@ export default function ServiceSheet({ open, onClose }) {
               <h2>{action.title}</h2>
               <p className="muted small">{action.text}</p>
               <button type="button" className="btn danger block" disabled={busy} onClick={() => run(action)}>
-                {busy ? 'Gözlə…' : action.title}
+                {busy ? step || 'Gözlə…' : action.title}
               </button>
             </div>
           ))}
+          {message && (
+            <p role="alert" className="amount-neg">
+              {message}
+            </p>
+          )}
           <p className="muted small">İnternet lazımdır. Silinən məlumat bərpa olunmur.</p>
         </div>
       )}
