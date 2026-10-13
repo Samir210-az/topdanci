@@ -17,6 +17,7 @@ import Settings from './pages/Settings'
 import Purchases from './pages/Purchases'
 import PurchaseForm from './pages/PurchaseForm'
 import SupplierDetail from './pages/SupplierDetail'
+import SupplierForm from './pages/SupplierForm'
 
 const Present = lazy(() => import('./pages/Present'))
 const Reports = lazy(() => import('./pages/Reports'))
@@ -55,7 +56,9 @@ export default function App() {
               <Route path="customers/:id/settle" element={<Settle />} />
               <Route path="purchases" element={<Purchases />} />
               <Route path="purchases/new" element={<PurchaseForm />} />
+              <Route path="suppliers/new" element={<SupplierForm />} />
               <Route path="suppliers/:id" element={<SupplierDetail />} />
+              <Route path="suppliers/:id/edit" element={<SupplierForm />} />
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" replace />} />

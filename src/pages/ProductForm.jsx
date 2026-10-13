@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import Sheet from '../components/Sheet'
-import SupplierPicker, { resolveSupplier } from '../components/SupplierPicker'
+import SupplierPicker from '../components/SupplierPicker'
 import { Field, MoneyInput, PageHeader, Segmented, Stepper, StockBadge } from '../components/ui'
 import { UNITS } from '../config'
 import { useData } from '../store/DataContext'
@@ -14,8 +14,7 @@ import { fromQepik, toQepik } from '../lib/money'
 function ProductEditor({ product }) {
   const navigate = useNavigate()
   const { suppliers, productMap } = useData()
-  const [supplierId, setSupplierId] = useState('')
-  const [newSupplier, setNewSupplier] = useState('')
+  const [supplier, setSupplier] = useState(null)
   const [mode, setMode] = useState('full')
   const [partial, setPartial] = useState('')
   const [form, setForm] = useState({
@@ -62,12 +61,11 @@ function ProductEditor({ product }) {
         image: form.image,
       }
 
-      const buying = !product && initialStock > 0 && (supplierId === '__new' ? newSupplier.trim() : supplierId)
+      const buying = !product && initialStock > 0 && supplier
       if (buying && data.cost <= 0) return notify('Təchizatçıdan alışı yazmaq üçün alış qiymətini yaz', 'error')
-      const supplier = buying ? resolveSupplier(suppliers, supplierId, newSupplier) : null
 
-      const id = saveProduct({ id: product?.id, data, initialStock: supplier ? 0 : initialStock })
-      if (supplier) {
+      const id = saveProduct({ id: product?.id, data, initialStock: buying ? 0 : initialStock })
+      if (buying) {
         const total = initialStock * data.cost
         const draft = { id, name, unit: data.unit, stock: 0, lots: [], cost: data.cost }
         createPurchase({
@@ -139,16 +137,9 @@ function ProductEditor({ product }) {
         </div>
 
         {!product && (
-          <SupplierPicker
-            optional
-            suppliers={suppliers}
-            value={supplierId}
-            onChange={setSupplierId}
-            newName={newSupplier}
-            onNewName={setNewSupplier}
-          />
+          <SupplierPicker optional suppliers={suppliers} value={supplier} onChange={setSupplier} />
         )}
-        {!product && supplierId && initialStock > 0 && (
+        {!product && supplier && initialStock > 0 && (
           <>
             <Segmented
               label="Ödəniş"

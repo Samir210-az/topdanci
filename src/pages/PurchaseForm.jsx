@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon'
 import Sheet from '../components/Sheet'
 import { Field, MoneyInput, PageHeader, ProductImage, Segmented, Stepper } from '../components/ui'
 import { useData } from '../store/DataContext'
-import SupplierPicker, { resolveSupplier } from '../components/SupplierPicker'
+import SupplierPicker from '../components/SupplierPicker'
 import { createPurchase } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, fromQepik, toQepik } from '../lib/money'
@@ -41,8 +41,7 @@ export default function PurchaseForm() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { products, productMap, suppliers } = useData()
-  const [supplierId, setSupplierId] = useState('')
-  const [newName, setNewName] = useState('')
+  const [supplier, setSupplier] = useState(null)
   const [lines, setLines] = useState(() => {
     const preset = productMap[params.get('product')]
     return preset ? [{ productId: preset.id, qty: 1, cost: preset.cost ? fromQepik(preset.cost) : '' }] : []
@@ -62,8 +61,7 @@ export default function PurchaseForm() {
 
   function submit() {
     try {
-      const supplier = resolveSupplier(suppliers, supplierId, newName)
-      if (!supplier) return notify('Təchizatçını seç və ya adını yaz', 'error')
+      if (!supplier) return notify('Təchizatçını seç', 'error')
       createPurchase({
         supplier,
         lines: lines.map((l) => ({ productId: l.productId, qty: l.qty, cost: toQepik(l.cost) })),
@@ -81,13 +79,7 @@ export default function PurchaseForm() {
     <>
       <PageHeader title="Yeni alış" back />
 
-      <SupplierPicker
-        suppliers={suppliers}
-        value={supplierId}
-        onChange={setSupplierId}
-        newName={newName}
-        onNewName={setNewName}
-      />
+      <SupplierPicker suppliers={suppliers} value={supplier} onChange={setSupplier} />
 
       <div className="list">
         {lines.map((line) => (

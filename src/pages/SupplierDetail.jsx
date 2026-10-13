@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Icon } from '../components/Icon'
 import { Link, useParams } from 'react-router-dom'
 import Sheet from '../components/Sheet'
 import { Field, MoneyInput, PageHeader } from '../components/ui'
@@ -7,6 +8,7 @@ import { cancelPurchase, cancelSupplierPayment, createSupplierPayment } from '..
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, toQepik } from '../lib/money'
 import { fmtDateTime, toDate } from '../lib/dates'
+import { telLink, waLink } from '../lib/share'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
 
@@ -89,7 +91,15 @@ export default function SupplierDetail() {
 
   return (
     <>
-      <PageHeader title={supplier.name} back />
+      <PageHeader
+        title={supplier.name}
+        back
+        actions={
+          <Link to={`/suppliers/${id}/edit`} className="icon-btn" aria-label="Redaktə et">
+            <Icon name="edit" />
+          </Link>
+        }
+      />
 
       <section className="card stack">
         <div>
@@ -102,6 +112,23 @@ export default function SupplierDetail() {
             )}
           </div>
         </div>
+        {(supplier.phone || supplier.address || supplier.note) && (
+          <div className="stack">
+            {supplier.phone && (
+              <div className="row" style={{ padding: '4px 0', border: 0 }}>
+                <span className="grow">{supplier.phone}</span>
+                <a className="icon-btn" href={telLink(supplier.phone)} aria-label="Zəng et">
+                  <Icon name="phone" />
+                </a>
+                <a className="icon-btn" href={waLink(supplier.phone)} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                  <Icon name="send" />
+                </a>
+              </div>
+            )}
+            {supplier.address && <p className="muted small">{supplier.address}</p>}
+            {supplier.note && <p className="muted small">{supplier.note}</p>}
+          </div>
+        )}
         <div className="form-grid">
           <Link className="btn primary" to="/purchases/new">
             Yeni alış

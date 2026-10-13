@@ -14,9 +14,14 @@ export default function Purchases() {
         title="Alış"
         back
         actions={
-          <Link to="/purchases/new" className="btn sm primary">
-            <Icon name="plus" size={18} /> Yeni alış
-          </Link>
+          <>
+            <Link to="/suppliers/new" className="btn sm">
+              Təchizatçı
+            </Link>
+            <Link to="/purchases/new" className="btn sm primary">
+              <Icon name="plus" size={18} /> Yeni alış
+            </Link>
+          </>
         }
       />
 
@@ -28,7 +33,7 @@ export default function Purchases() {
       </div>
 
       {suppliers.length === 0 ? (
-        <Empty title="Hələ təchizatçı yoxdur" text="İlk alışı yazanda təchizatçı da əlavə olunur." to="/purchases/new" action="Alış yaz" />
+        <Empty title="Hələ təchizatçı yoxdur" to="/suppliers/new" action="Təchizatçı əlavə et" />
       ) : (
         <div className="list">
           {suppliers.map((supplier) => (
