@@ -421,3 +421,107 @@ table.data .num {
     scroll-behavior: smooth;
   }
 }
+
+/* rəngli kartlar: bütün kartlarda yazı ağdır */
+:root {
+  --card: #1d5142;
+  --c-green: #17463a;
+  --c-teal: #17606e;
+  --c-amber: #98500f;
+  --c-red: #a3281d;
+  --c-indigo: #3a4a8f;
+  --c-plum: #6b3a74;
+}
+
+.card,
+.row,
+.line,
+.stat,
+.pcard {
+  background: var(--card);
+  border-color: transparent;
+  color: #fff;
+}
+
+.summary {
+  background: var(--c-teal);
+  color: #fff;
+}
+
+.stat {
+  background: var(--c-green);
+}
+
+.stat.t-teal {
+  background: var(--c-teal);
+}
+
+.stat.t-amber {
+  background: var(--c-amber);
+}
+
+.stat.t-red {
+  background: var(--c-red);
+}
+
+.stat.t-indigo {
+  background: var(--c-indigo);
+}
+
+.stat.t-plum {
+  background: var(--c-plum);
+}
+
+.stat span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+:is(.card, .row, .line, .stat, .summary, .pcard) a:not(.btn) {
+  color: #fff;
+}
+
+:is(.card, .row, .line, .stat, .summary, .pcard) .muted,
+:is(.card, .row, .line, .stat, .summary, .pcard) .field-hint {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:is(.card, .row, .line, .summary, .pcard) .amount-neg {
+  color: #ffb9ae;
+}
+
+:is(.card, .row, .line, .summary, .pcard) .amount-pos {
+  color: #9bf0bd;
+}
+
+:is(.card, .row, .line, .summary, .pcard) table.data th {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:is(.card, .row, .line, .summary, .pcard) table.data th,
+:is(.card, .row, .line, .summary, .pcard) table.data td {
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+.input,
+.stepper input,
+.stepper button {
+  color: var(--ink);
+}
+
+.chips button {
+  color: var(--ink);
+}
+
+.chips button.on {
+  color: #fff;
+}
+
+.btn.primary,
+.btn.accent {
+  color: #fff;
+}
+
+.btn.accent {
+  background: #a94f12;
+  border-color: #a94f12;
+}

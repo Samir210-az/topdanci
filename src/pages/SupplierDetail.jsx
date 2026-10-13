@@ -171,11 +171,11 @@ export default function SupplierDetail() {
           ))}
         </div>
         <div className="stats">
-          <div className="stat">
+          <div className="stat t-indigo">
             <span>Alınıb ({period.count} alış)</span>
             <strong>{fmtMoney(period.total)}</strong>
           </div>
-          <div className="stat">
+          <div className="stat t-teal">
             <span>Ödənilib</span>
             <strong>{fmtMoney(period.paid)}</strong>
           </div>

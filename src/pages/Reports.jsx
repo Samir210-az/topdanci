@@ -73,20 +73,20 @@ function Sales({ days }) {
           <span>Satış</span>
           <strong>{fmtMoney(report.revenue)}</strong>
         </div>
-        <div className="stat">
+        <div className="stat t-teal">
           <span>Yığılan pul</span>
           <strong>{fmtMoney(report.collected)}</strong>
         </div>
-        <div className="stat">
+        <div className="stat t-amber">
           <span>Yeni borc</span>
           <strong>{fmtMoney(report.newDebt)}</strong>
         </div>
-        <div className="stat">
+        <div className="stat t-plum">
           <span>Mənfəət</span>
           <strong>{fmtMoney(report.profit)}</strong>
         </div>
       </div>
-      <p className="muted small">Mənfəət satış anındakı alış qiymətinə görə hesablanır. Konsiqnasiya satış sayılmır.</p>
+      <p className="muted small">Mənfəət satış anındakı alış qiymətinə görə hesablanır. Əmanət verilən mal satış sayılmır.</p>
 
       <h2>Ən çox satılanlar</h2>
       {report.top.length === 0 ? (
@@ -182,11 +182,11 @@ function Stock() {
   return (
     <>
       <div className="stats">
-        <div className="stat">
+        <div className="stat t-teal">
           <span>Anbar (alış qiyməti ilə)</span>
           <strong>{fmtMoney(warehouseValue)}</strong>
         </div>
-        <div className="stat">
+        <div className="stat t-indigo">
           <span>Müştərilərdə (alış qiyməti ilə)</span>
           <strong>{fmtMoney(heldValue)}</strong>
         </div>
