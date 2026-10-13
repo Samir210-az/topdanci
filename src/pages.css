@@ -77,6 +77,9 @@
 }
 
 .quick .btn {
+  background: var(--card);
+  border-color: var(--card);
+  color: #fff;
   flex-direction: column;
   gap: 4px;
   min-height: 70px;

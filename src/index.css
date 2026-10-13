@@ -367,6 +367,7 @@ textarea {
 .field {
   display: grid;
   gap: 6px;
+  align-content: start;
 }
 
 .field-label {
@@ -414,6 +415,7 @@ textarea.input {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: start;
 }
 
 .form-grid .wide {
