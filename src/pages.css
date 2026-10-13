@@ -499,3 +499,142 @@ table.data .num {
   background: #a94f12;
   border-color: #a94f12;
 }
+
+.guide {
+  display: grid;
+  gap: 22px;
+}
+
+.guide section {
+  display: grid;
+  gap: 10px;
+}
+
+.guide h2 {
+  font-size: 1.1rem;
+}
+
+.guide p,
+.guide li {
+  line-height: 1.55;
+}
+
+.guide ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.guide-table {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.guide-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-table th {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.guide-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.flow li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--card);
+  color: #fff;
+}
+
+.flow li span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.85rem;
+}
+
+.flow li + li {
+  margin-top: 22px;
+  position: relative;
+}
+
+.flow li + li::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  width: 2px;
+  height: 14px;
+  background: var(--brand);
+  transform: translateX(-50%);
+}
+
+.flow li + li::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  border: 5px solid transparent;
+  border-top-color: var(--brand);
+  transform: translateX(-50%);
+}
+
+@media (min-width: 700px) {
+  .flow {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 22px;
+  }
+
+  .flow li + li {
+    margin-top: 0;
+  }
+
+  .flow li + li::before {
+    left: -18px;
+    top: 50%;
+    width: 14px;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+
+  .flow li + li::after {
+    left: -9px;
+    top: 50%;
+    border: 5px solid transparent;
+    border-left-color: var(--brand);
+    transform: translateY(-50%);
+  }
+}
+
+.guide-link {
+  background: var(--card);
+  border-color: var(--card);
+  color: #fff;
+}

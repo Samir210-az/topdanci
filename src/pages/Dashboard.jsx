@@ -65,6 +65,10 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      <Link to="/guide" className="btn block guide-link">
+        <Icon name="book" /> İstifadə təlimatı
+      </Link>
+
       {view.low.length > 0 && (
         <section className="stack">
           <h2>Azalan mallar</h2>

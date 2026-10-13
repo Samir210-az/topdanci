@@ -23,6 +23,7 @@ import ReturnToSupplier from './pages/ReturnToSupplier'
 
 const Present = lazy(() => import('./pages/Present'))
 const Reports = lazy(() => import('./pages/Reports'))
+const Guide = lazy(() => import('./pages/Guide'))
 
 function Splash() {
   return (
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="suppliers/:id/return" element={<ReturnToSupplier />} />
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="guide" element={<Guide />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
