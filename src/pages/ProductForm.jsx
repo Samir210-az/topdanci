@@ -2,16 +2,22 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import Sheet from '../components/Sheet'
-import { Field, MoneyInput, PageHeader, Stepper, StockBadge } from '../components/ui'
+import SupplierPicker, { resolveSupplier } from '../components/SupplierPicker'
+import { Field, MoneyInput, PageHeader, Segmented, Stepper, StockBadge } from '../components/ui'
 import { UNITS } from '../config'
 import { useData } from '../store/DataContext'
-import { adjustStock, saveProduct, setProductArchived } from '../lib/actions'
+import { adjustStock, createPurchase, saveProduct, setProductArchived } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fileToDataUrl } from '../lib/image'
 import { fromQepik, toQepik } from '../lib/money'
 
 function ProductEditor({ product }) {
   const navigate = useNavigate()
+  const { suppliers, productMap } = useData()
+  const [supplierId, setSupplierId] = useState('')
+  const [newSupplier, setNewSupplier] = useState('')
+  const [mode, setMode] = useState('full')
+  const [partial, setPartial] = useState('')
   const [form, setForm] = useState({
     name: product?.name || '',
     price: product ? fromQepik(product.price) : '',
@@ -47,18 +53,30 @@ function ProductEditor({ product }) {
     if (price <= 0) return notify('Satış qiymətini yaz', 'error')
 
     try {
-      saveProduct({
-        id: product?.id,
-        data: {
-          name,
-          price,
-          ...(product ? {} : { cost: toQepik(form.cost) }),
-          unit: form.unit,
-          lowStock: form.lowStock,
-          image: form.image,
-        },
-        initialStock,
-      })
+      const data = {
+        name,
+        price,
+        ...(product ? {} : { cost: toQepik(form.cost) }),
+        unit: form.unit,
+        lowStock: form.lowStock,
+        image: form.image,
+      }
+
+      const buying = !product && initialStock > 0 && (supplierId === '__new' ? newSupplier.trim() : supplierId)
+      if (buying && data.cost <= 0) return notify('Təchizatçıdan alışı yazmaq üçün alış qiymətini yaz', 'error')
+      const supplier = buying ? resolveSupplier(suppliers, supplierId, newSupplier) : null
+
+      const id = saveProduct({ id: product?.id, data, initialStock: supplier ? 0 : initialStock })
+      if (supplier) {
+        const total = initialStock * data.cost
+        const draft = { id, name, unit: data.unit, stock: 0, lots: [], cost: data.cost }
+        createPurchase({
+          supplier,
+          lines: [{ productId: id, qty: initialStock, cost: data.cost }],
+          paid: mode === 'full' ? total : mode === 'credit' ? 0 : toQepik(partial),
+          productMap: { ...productMap, [id]: draft },
+        })
+      }
       navigate('/products', { replace: true })
     } catch (error) {
       reportError(error)
@@ -119,6 +137,36 @@ function ProductEditor({ product }) {
             </div>
           )}
         </div>
+
+        {!product && (
+          <SupplierPicker
+            optional
+            suppliers={suppliers}
+            value={supplierId}
+            onChange={setSupplierId}
+            newName={newSupplier}
+            onNewName={setNewSupplier}
+          />
+        )}
+        {!product && supplierId && initialStock > 0 && (
+          <>
+            <Segmented
+              label="Ödəniş"
+              value={mode}
+              onChange={setMode}
+              options={[
+                { value: 'full', label: 'Tam ödədim' },
+                { value: 'partial', label: 'Qismən' },
+                { value: 'credit', label: 'Borca' },
+              ]}
+            />
+            {mode === 'partial' && (
+              <Field label="Ödənilən məbləğ, ₼">
+                <MoneyInput value={partial} onChange={setPartial} />
+              </Field>
+            )}
+          </>
+        )}
 
         <button className="btn primary block" disabled={busy}>
           Yadda saxla

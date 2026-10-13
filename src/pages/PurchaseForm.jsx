@@ -4,7 +4,8 @@ import { Icon } from '../components/Icon'
 import Sheet from '../components/Sheet'
 import { Field, MoneyInput, PageHeader, ProductImage, Segmented, Stepper } from '../components/ui'
 import { useData } from '../store/DataContext'
-import { createPurchase, saveSupplier } from '../lib/actions'
+import SupplierPicker, { resolveSupplier } from '../components/SupplierPicker'
+import { createPurchase } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, fromQepik, toQepik } from '../lib/money'
 
@@ -61,12 +62,8 @@ export default function PurchaseForm() {
 
   function submit() {
     try {
-      let supplier = suppliers.find((s) => s.id === supplierId)
-      if (!supplier) {
-        const name = newName.trim()
-        if (!name) return notify('Təchizatçını seç və ya adını yaz', 'error')
-        supplier = { id: saveSupplier({ data: { name } }), name }
-      }
+      const supplier = resolveSupplier(suppliers, supplierId, newName)
+      if (!supplier) return notify('Təchizatçını seç və ya adını yaz', 'error')
       createPurchase({
         supplier,
         lines: lines.map((l) => ({ productId: l.productId, qty: l.qty, cost: toQepik(l.cost) })),
@@ -84,25 +81,13 @@ export default function PurchaseForm() {
     <>
       <PageHeader title="Yeni alış" back />
 
-      <Field label="Təchizatçı">
-        <select
-          className="input"
-          value={supplierId}
-          onChange={(event) => setSupplierId(event.target.value)}
-        >
-          <option value="">{suppliers.length ? 'Yeni təchizatçı…' : 'Təchizatçı yoxdur'}</option>
-          {suppliers.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-      {!supplierId && (
-        <Field label="Yeni təchizatçının adı">
-          <input className="input" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)} />
-        </Field>
-      )}
+      <SupplierPicker
+        suppliers={suppliers}
+        value={supplierId}
+        onChange={setSupplierId}
+        newName={newName}
+        onNewName={setNewName}
+      />
 
       <div className="list">
         {lines.map((line) => (
