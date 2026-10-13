@@ -4,7 +4,7 @@ import { useData } from '../store/DataContext'
 import { useCart } from '../store/CartContext'
 
 const TABS = [
-  { to: '/', label: 'Ana', icon: 'home', end: true },
+  { to: '/', label: 'Əsas', icon: 'home', end: true },
   { to: '/products', label: 'Mallar', icon: 'box' },
   { to: '/sale', label: 'Satış', icon: 'cart' },
   { to: '/customers', label: 'Müştərilər', icon: 'users' },

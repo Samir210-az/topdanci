@@ -1,3 +1,4 @@
+const mk = (qty, cost, at, sid) => (sid ? { qty, cost, at: at || 0, sid } : { qty, cost, at: at || 0 })
 const sum = (lots) => lots.reduce((total, lot) => total + lot.qty, 0)
 
 function merge(lots) {
@@ -5,14 +6,14 @@ function merge(lots) {
   const out = []
   for (const lot of sorted) {
     const last = out[out.length - 1]
-    if (last && last.at === lot.at && last.cost === lot.cost) last.qty += lot.qty
+    if (last && last.at === lot.at && last.cost === lot.cost && last.sid === lot.sid) last.qty += lot.qty
     else out.push({ ...lot })
   }
   return out
 }
 
 export function lotsOf(product) {
-  const stored = (product?.lots || []).map((l) => ({ qty: l.qty, cost: l.cost, at: l.at || 0 }))
+  const stored = (product?.lots || []).map((l) => mk(l.qty, l.cost, l.at, l.sid))
   const stock = Math.max(product?.stock || 0, 0)
   const total = sum(stored)
   if (total < stock) {
@@ -40,7 +41,7 @@ export function takeOldest(lots, qty) {
   for (const lot of rest) {
     if (left <= 0) break
     const cut = Math.min(lot.qty, left)
-    taken.push({ qty: cut, cost: lot.cost, at: lot.at })
+    taken.push(mk(cut, lot.cost, lot.at, lot.sid))
     lot.qty -= cut
     left -= cut
   }
@@ -60,7 +61,7 @@ export function totalCost(taken) {
 export function applyLots(lots, { out = [], inn = [] }) {
   let current = merge(lots)
   for (const item of out) {
-    const index = current.findIndex((l) => l.at === item.at && l.cost === item.cost && l.qty >= item.qty)
+    const index = current.findIndex((l) => l.at === item.at && l.cost === item.cost && l.sid === item.sid && l.qty >= item.qty)
     if (index >= 0) {
       current[index] = { ...current[index], qty: current[index].qty - item.qty }
       current = current.filter((l) => l.qty > 0)
@@ -72,3 +73,9 @@ export function applyLots(lots, { out = [], inn = [] }) {
 }
 
 export const lotsQty = sum
+
+export function qtyFromSupplier(product, supplierId) {
+  return lotsOf(product)
+    .filter((lot) => lot.sid === supplierId)
+    .reduce((total, lot) => total + lot.qty, 0)
+}

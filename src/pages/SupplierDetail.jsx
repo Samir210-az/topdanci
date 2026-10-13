@@ -8,6 +8,7 @@ import { cancelPurchase, cancelSupplierPayment, createSupplierPayment } from '..
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, toQepik } from '../lib/money'
 import { addDays, dateKey, fmtDateTime, startOfDay, toDate } from '../lib/dates'
+import { qtyFromSupplier } from '../lib/lots'
 import { telLink, waLink } from '../lib/share'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
@@ -196,13 +197,13 @@ export default function SupplierDetail() {
                     </span>
                   </div>
                   <span className="badge muted-badge">
-                    Anbarda: {product ? product.stock || 0 : 0} {g.unit}
+                    Ondan qalıb: {product ? qtyFromSupplier(product, id) : 0} {g.unit}
                   </span>
                 </div>
               )
             })}
           </div>
-          <p className="muted small">Anbar qalığı malın ümumi qalığıdır, başqa təchizatçıdan alınan da buna daxildir.</p>
+          <p className="muted small">“Ondan qalıb” yalnız bu təchizatçıdan alınıb hələ satılmayan maldır. Köhnə qeydlər üçün hesablanmır.</p>
         </section>
       )}
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { applyLots, lotsOf, takeOldest, unitCost } from './lots.js'
+import { applyLots, lotsOf, qtyFromSupplier, takeOldest, unitCost } from './lots.js'
 
 const stocked = { stock: 20, lots: [{ qty: 10, cost: 500, at: 1 }, { qty: 10, cost: 600, at: 2 }] }
 
@@ -39,4 +39,25 @@ test('qalıq partiyalardan azdırsa, ən yeni partiyadan kəsilir', () => {
 test('alış ləğv edəndə həmin partiya çıxarılır', () => {
   const after = applyLots(lotsOf(stocked), { out: [{ qty: 10, cost: 600, at: 2 }] })
   assert.deepEqual(after, [{ qty: 10, cost: 500, at: 1 }])
+})
+
+test('eyni qiymətli partiyalar fərqli təchizatçıdan olanda qarışmır', () => {
+  const product = {
+    stock: 10,
+    lots: [{ qty: 4, cost: 500, at: 1, sid: 'x' }, { qty: 6, cost: 500, at: 1, sid: 'y' }],
+  }
+  assert.equal(lotsOf(product).length, 2)
+  assert.equal(qtyFromSupplier(product, 'x'), 4)
+  assert.equal(qtyFromSupplier(product, 'y'), 6)
+})
+
+test('satışdan sonra təchizatçıya aid qalıq azalır', () => {
+  const product = {
+    stock: 10,
+    lots: [{ qty: 4, cost: 500, at: 1, sid: 'x' }, { qty: 6, cost: 600, at: 2, sid: 'y' }],
+  }
+  const { rest } = takeOldest(lotsOf(product), 5)
+  const after = { stock: 5, lots: rest }
+  assert.equal(qtyFromSupplier(after, 'x'), 0)
+  assert.equal(qtyFromSupplier(after, 'y'), 5)
 })

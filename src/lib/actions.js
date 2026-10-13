@@ -325,7 +325,7 @@ export function createPurchase({ supplier, lines, paid, note = '', productMap })
   const lotsIn = Object.fromEntries(
     Object.entries(groupBy(items, 'productId')).map(([productId, rows]) => [
       productId,
-      rows.map((r) => ({ qty: r.qty, cost: r.cost, at: atMs })),
+      rows.map((r) => ({ qty: r.qty, cost: r.cost, at: atMs, sid: supplier.id })),
     ]),
   )
   const fx = { ...plan.fx, lotsIn }
