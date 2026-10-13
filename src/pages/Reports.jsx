@@ -5,6 +5,7 @@ import { Empty, PageHeader } from '../components/ui'
 import { useData } from '../store/DataContext'
 import { addDays, dateKey, startOfDay } from '../lib/dates'
 import { downloadCsv } from '../lib/csv'
+import { lotsOf } from '../lib/lots'
 import { fmtMoney, fromQepik } from '../lib/money'
 
 const PERIODS = [
@@ -36,7 +37,7 @@ function Sales({ days }) {
     const rows = sales.filter((s) => s.dateKey >= from && !s.canceled)
     const real = rows.filter((s) => s.type === 'sale' || s.type === 'settle')
     const back = rows.filter((s) => s.type === 'return')
-    const margin = (s) => s.items.reduce((p, l) => p + l.qty * (l.price - (l.cost || 0)), 0)
+    const margin = (s) => s.items.reduce((p, l) => p + l.qty * l.price - (l.costTotal ?? l.qty * (l.cost || 0)), 0)
     const revenue = real.reduce((sum, s) => sum + s.total, 0) - back.reduce((sum, s) => sum + s.total, 0)
     const profit = real.reduce((sum, s) => sum + margin(s), 0) - back.reduce((sum, s) => sum + margin(s), 0)
     const newDebt = rows.reduce((sum, s) => sum + Math.max(s.fx?.balance ?? s.total - s.paid, 0), 0)
@@ -45,15 +46,17 @@ function Sales({ days }) {
       payments.filter((p) => p.dateKey >= from && !p.canceled).reduce((sum, p) => sum + p.amount, 0)
 
     const byProduct = {}
-    for (const sale of real) {
+    for (const sale of [...real, ...back]) {
+      const sign = sale.type === 'return' ? -1 : 1
       for (const line of sale.items) {
         const entry = (byProduct[line.productId] ||= { name: line.name, unit: line.unit, qty: 0, sum: 0 })
-        entry.qty += line.qty
-        entry.sum += line.qty * line.price
+        entry.qty += sign * line.qty
+        entry.sum += sign * line.qty * line.price
       }
     }
     const top = Object.entries(byProduct)
       .map(([id, entry]) => ({ id, ...entry }))
+      .filter((p) => p.qty > 0)
       .sort((a, b) => b.sum - a.sum)
     return { revenue, profit, newDebt, collected, top, rows }
   }, [sales, payments, days])
@@ -123,7 +126,6 @@ function Debts() {
     ])
   }
 
-  if (!debtors.length) return <Empty title="Borcu olan müştəri yoxdur" />
   return (
     <>
       <div className="summary">
@@ -140,6 +142,7 @@ function Debts() {
           <span>{debtors.length}</span>
         </div>
       </div>
+      {!debtors.length && <Empty title="Borcu olan müştəri yoxdur" />}
       <div className="list">
         {debtors.map((c) => (
           <Link key={c.id} to={`/customers/${c.id}`} className="row">
@@ -151,13 +154,13 @@ function Debts() {
           </Link>
         ))}
       </div>
-      <CsvButton onClick={exportCsv} />
+      {debtors.length > 0 && <CsvButton onClick={exportCsv} />}
     </>
   )
 }
 
 function Stock() {
-  const { products, customers } = useData()
+  const { products, customers, productMap } = useData()
 
   const rows = useMemo(() => {
     const held = {}
@@ -167,8 +170,16 @@ function Stock() {
     return products.map((p) => ({ ...p, held: held[p.id] || 0 }))
   }, [products, customers])
 
-  const warehouseValue = rows.reduce((sum, p) => sum + Math.max(p.stock || 0, 0) * (p.cost || 0), 0)
-  const heldValue = rows.reduce((sum, p) => sum + p.held * (p.cost || 0), 0)
+  const warehouseValue = rows.reduce((sum, p) => sum + lotsOf(p).reduce((t, l) => t + l.qty * l.cost, 0), 0)
+  const heldValue = customers.reduce(
+    (sum, c) =>
+      sum +
+      Object.entries(c.holdings || {}).reduce((t, [id, qty]) => {
+        if (qty <= 0) return t
+        return t + (c.holdCost?.[id] ?? qty * (productMap[id]?.cost || 0))
+      }, 0),
+    0,
+  )
 
   function exportCsv() {
     downloadCsv('qaliq.csv', [

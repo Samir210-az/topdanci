@@ -223,7 +223,7 @@ export default function CustomerDetail() {
                   onClick={() =>
                     run(() =>
                       kind === 'sale'
-                        ? cancelSale({ sale: doc, customer, productMap })
+                        ? cancelSale({ sale: doc, customer, productMap, sales })
                         : cancelPayment({ payment: doc }),
                     )
                   }

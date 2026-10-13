@@ -6,6 +6,7 @@ import { MoneyInput, PageHeader, ProductImage, Stepper } from '../components/ui'
 import { useData } from '../store/DataContext'
 import { returnFromCustomer } from '../lib/actions'
 import { reportError } from '../lib/events'
+import { returnableQty } from '../lib/returns'
 import { fmtMoney, fromQepik, toQepik } from '../lib/money'
 
 function Editor({ customer }) {
@@ -14,11 +15,7 @@ function Editor({ customer }) {
   const [lines, setLines] = useState([])
   const [picking, setPicking] = useState(false)
 
-  const boughtBefore = new Set(
-    sales
-      .filter((s) => s.customerId === customer.id && !s.canceled && s.type !== 'return')
-      .flatMap((s) => s.items.map((l) => l.productId)),
-  )
+  const available = (productId) => returnableQty(sales, customer.id, productId)
 
   function lastPrice(product) {
     const line = sales
@@ -50,6 +47,7 @@ function Editor({ customer }) {
     <>
       <PageHeader title="Mal qaytarma" back />
       <p className="muted">{customer.name} aldığı malı sənə qaytarır. Qiymət müştəriyə satdığın qiymətdir, borcdan çıxılır.</p>
+      <p className="muted small">Satışa verilən malı qaytarmaq üçün müştəri səhifəsində “Hesablaşma / qaytarma” istifadə et.</p>
 
       <div className="list">
         {lines.map((line) => {
@@ -71,7 +69,7 @@ function Editor({ customer }) {
                 </button>
               </div>
               <div className="line-bottom">
-                <Stepper value={line.qty} min={1} onChange={(qty) => patch(line.productId)({ qty })} label="Say" />
+                <Stepper value={line.qty} min={1} max={available(line.productId)} onChange={(qty) => patch(line.productId)({ qty })} label="Say" />
                 <MoneyInput
                   value={line.price}
                   aria-label="Qiymət"
@@ -106,8 +104,8 @@ function Editor({ customer }) {
       <ProductPickerSheet
         open={picking}
         onClose={() => setPicking(false)}
-        filter={(p) => boughtBefore.has(p.id)}
-        empty="Bu müştəriyə son 90 gündə satılmış mal yoxdur."
+        filter={(p) => available(p.id) > 0}
+        empty="Qaytarıla bilən mal yoxdur. Yalnız son 90 gündə satılıb hələ qaytarılmamış mal göstərilir."
         onPick={(p) =>
           setLines((current) =>
             current.some((l) => l.productId === p.id) ? current : [...current, { productId: p.id, qty: 1, price: lastPrice(p) }],

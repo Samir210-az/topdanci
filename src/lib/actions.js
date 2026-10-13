@@ -13,6 +13,7 @@ import {
 } from './ledger'
 import { applyLots, lotsOf, takeFromSupplier, takeOldest, totalCost, unitCost } from './lots'
 import { dateKey } from './dates'
+import { returnableQty } from './returns'
 import { reportError } from './events'
 
 function stamp() {
@@ -103,7 +104,7 @@ function takeForSale(items, productMap) {
     const { taken, rest } = takeOldest(lots, line.qty)
     work[line.productId] = rest
     lotsOut[line.productId] = [...(lotsOut[line.productId] || []), ...taken]
-    return { ...line, cost: unitCost(taken) }
+    return { ...line, cost: unitCost(taken), costTotal: totalCost(taken) }
   })
   return { costed, lotsOut }
 }
@@ -239,8 +240,15 @@ export function createPayment({ customer, amount, method, note = '' }) {
   return ref.id
 }
 
-export function cancelSale({ sale, customer, productMap }) {
+export function cancelSale({ sale, customer, productMap, sales = [] }) {
   if (sale.canceled) throw new LedgerError('Bu əməliyyat artıq ləğv edilib')
+  if (sale.type === 'sale' || sale.type === 'settle') {
+    for (const line of sale.items) {
+      if (returnableQty(sales, sale.customerId, line.productId, sale.id) < 0) {
+        throw new LedgerError('Bu satışdakı mal artıq müştəridən qaytarılıb. Əvvəl qaytarmanı ləğv et')
+      }
+    }
+  }
   const undo = planCancel({
     fx: sale.fx,
     stockOf: stockOf(productMap, Object.keys(sale.fx.stock)),
@@ -460,9 +468,15 @@ export function returnFromCustomer({ customer, lines, note = '', productMap, sal
         sale.items.some((l) => l.productId === productId),
     )?.items.find((l) => l.productId === productId)
 
+  const asked = {}
   const items = lines.map((line) => {
     const product = productMap[line.productId]
     if (!product) throw new LedgerError('Mal tapılmadı. Siyahını yeniləyib yenidən yoxla')
+    asked[line.productId] = (asked[line.productId] || 0) + line.qty
+    const available = returnableQty(sales, customer.id, line.productId)
+    if (asked[line.productId] > available) {
+      throw new LedgerError(`“${product.name}” üçün qaytarıla bilən say: ${Math.max(available, 0)}`)
+    }
     const last = recent(line.productId)
     return {
       productId: line.productId,
