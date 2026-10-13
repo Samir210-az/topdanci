@@ -1,4 +1,4 @@
-import { collection, doc, increment, Timestamp, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, increment, Timestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import {
   holdUnit,
@@ -549,4 +549,21 @@ export function returnToSupplier({ supplier, lines, note = '', productMap }) {
   batch.update(doc(db, 'suppliers', supplier.id), goods)
   commit(batch)
   return { id: ref.id, ...record }
+}
+
+export function saveReceipt({ sale, signature, signedBy, debt }) {
+  const { at } = stamp()
+  const receipt = { debt, signedBy, createdAt: at, ...(signature ? { signature, signedAt: at } : {}) }
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'sales', sale.id), { receipt, receiptSent: arrayUnion(at) })
+  commit(batch)
+  return { at, receipt }
+}
+
+export function markReceiptSent({ sale }) {
+  const { at } = stamp()
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'sales', sale.id), { receiptSent: arrayUnion(at) })
+  commit(batch)
+  return at
 }

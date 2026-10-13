@@ -638,3 +638,18 @@ table.data .num {
   border-color: var(--card);
   color: #fff;
 }
+
+.sign-pad {
+  width: 100%;
+  aspect-ratio: 640 / 240;
+  touch-action: none;
+  background: #fff;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+}
+
+.receipt-preview {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}

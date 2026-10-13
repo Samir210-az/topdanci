@@ -8,7 +8,8 @@ import { cancelPayment, cancelSale, createPayment } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, toQepik } from '../lib/money'
 import { fmtDateTime, toDate } from '../lib/dates'
-import { buildReceipt, sendText, telLink, waLink } from '../lib/share'
+import { telLink, waLink } from '../lib/share'
+import ReceiptSheet from '../components/ReceiptSheet'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
 const TYPE_LABEL = { sale: 'Satış', consign: 'Satışa verilən', settle: 'Hesablaşma', return: 'Mal qaytarma' }
@@ -71,6 +72,7 @@ export default function CustomerDetail() {
   const { id } = useParams()
   const { customerMap, productMap, sales, payments } = useData()
   const [paying, setPaying] = useState(false)
+  const [receiptFor, setReceiptFor] = useState(null)
   const customer = customerMap[id]
 
   const history = useMemo(() => {
@@ -210,13 +212,9 @@ export default function CustomerDetail() {
             {doc.note && <p className="muted small">{doc.note}</p>}
             {!doc.canceled && (
               <div className="page-actions" style={{ marginLeft: 0 }}>
-                {kind === 'sale' && (
-                  <button
-                    type="button"
-                    className="btn sm"
-                    onClick={() => sendText(buildReceipt(doc, customer.balance), customer.phone)}
-                  >
-                    <Icon name="send" size={16} /> Qaimə göndər
+                {kind === 'sale' && doc.type !== 'return' && (
+                  <button type="button" className="btn sm" onClick={() => setReceiptFor(doc.id)}>
+                    <Icon name="send" size={16} /> {doc.receipt ? 'Qaimə (saxlanılıb)' : 'Qaimə (PDF)'}
                   </button>
                 )}
                 <button
@@ -239,6 +237,12 @@ export default function CustomerDetail() {
         <p className="muted small">Son 90 günün əməliyyatları göstərilir. Balans bütün tarixi əhatə edir.</p>
       </section>
 
+      <ReceiptSheet
+        open={Boolean(receiptFor)}
+        sale={sales.find((s) => s.id === receiptFor)}
+        customer={customer}
+        onClose={() => setReceiptFor(null)}
+      />
       <PaymentSheet open={paying} customer={customer} onClose={() => setPaying(false)} />
     </>
   )

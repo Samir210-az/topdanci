@@ -176,7 +176,7 @@ export default function Guide() {
             ['Nisyə', 'Heç nə almırsan, hamısı borca düşür', 'Borc 100 ₼'],
           ]}
         />
-        <p>Təsdiqləyəndən sonra anbardan mal çıxır, müştərinin borcu yenilənir. Müştərinin səhifəsində satışın yanındakı “Qaimə göndər” düyməsi qaiməni mətn kimi müştəriyə göndərir.</p>
+        <p>Təsdiqləyəndən sonra anbardan mal çıxır, müştərinin borcu yenilənir. Müştərinin səhifəsində satışın yanındakı “Qaimə (PDF)” düyməsi qaiməni PDF kimi hazırlayır. Müştəri ekrana barmaqla imza çəkə bilər, çəkməsə PDF-də qələmlə imza yeri qalır. Qaimə və göndərilmə vaxtı sistemdə saxlanılır, düyməyə yenidən basıb istənilən vaxt göstərə və ya göndərə bilərsən.</p>
       </section>
 
       <section>
