@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { PIN_LENGTH } from '../config'
 import { Icon } from '../components/Icon'
+import Wordmark from '../components/Wordmark'
 
 const ERRORS = {
   'auth/invalid-credential': 'PIN yanlışdır',
@@ -60,7 +61,9 @@ export default function LoginScreen() {
   return (
     <main className="login">
       <img className="login-logo" src="/icon.svg" alt="" width="72" height="72" />
-      <h1>Topdançı</h1>
+      <h1>
+          <Wordmark />
+        </h1>
       <p className="muted">PIN-i daxil et</p>
 
       <div className="pin-dots" role="img" aria-label={`PIN: ${pin.length} / ${PIN_LENGTH} rəqəm`}>

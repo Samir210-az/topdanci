@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import ServiceSheet from './ServiceSheet'
+import Wordmark from './Wordmark'
 import { usePwaInstall } from '../lib/install'
 import { Icon } from './Icon'
 import { useData } from '../store/DataContext'
@@ -54,7 +55,7 @@ export default function Layout() {
     <div className="app">
       <header className="topbar">
         <Link to="/" className="brand" onClick={brandTap}>
-          Topdançı
+          <Wordmark onDark />
         </Link>
         <SyncBadge />
         {pwa.canPrompt && !pwa.installed && (

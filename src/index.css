@@ -650,3 +650,25 @@ textarea.input {
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
   }
 }
+
+.wordmark {
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.wordmark .wm-a {
+  color: #14201c;
+}
+
+.wordmark .wm-b {
+  color: var(--brand);
+}
+
+.wordmark.on-dark .wm-a {
+  color: #fff;
+}
+
+.wordmark.on-dark .wm-b {
+  color: #8fd4b0;
+}
