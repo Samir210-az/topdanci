@@ -10,7 +10,7 @@ const GREY = '#5b6661'
 const GREEN = '#17463a'
 const LINE = '#cfd6d2'
 
-const TITLES = { sale: 'QAIMƏ', consign: 'SATIŞA VERİLƏN MAL', settle: 'HESABLAŞMA' }
+const TITLES = { sale: 'QAİMƏ', consign: 'SATIŞA VERİLƏN MAL', settle: 'HESABLAŞMA', return: 'MAL QAYTARMA QAİMƏSİ' }
 
 const pad = (n) => String(n).padStart(2, '0')
 
@@ -58,7 +58,7 @@ function wordmark(ctx, baseline) {
     ['DANÇI', GREEN],
   ]
   const tight = -4
-  ctx.font = `900 112px ${FONT}`
+  ctx.font = `900 74px ${FONT}`
   ctx.textAlign = 'left'
   const chars = parts.flatMap(([text, color]) => [...text].map((ch) => ({ ch, color, w: ctx.measureText(ch).width })))
   const total = chars.reduce((sum, c) => sum + c.w + tight, -tight)
@@ -69,20 +69,20 @@ function wordmark(ctx, baseline) {
     x += c.w + tight
   }
   ctx.fillStyle = GREEN
-  ctx.fillRect((W - total) / 2, baseline + 16, total, 7)
+  ctx.fillRect((W - total) / 2, baseline + 12, total, 5)
 }
 
 function paint(ctx, d, signature) {
   let y = M
   ctx.textBaseline = 'alphabetic'
 
-  y += 92
+  y += 62
   wordmark(ctx, y)
 
   ctx.font = `600 34px ${FONT}`
   ctx.fillStyle = GREY
   ctx.textAlign = 'center'
-  y += 62
+  y += 58
   ctx.fillText(d.title, W / 2, y)
 
   ctx.font = `600 40px ${FONT}`
@@ -136,7 +136,7 @@ function paint(ctx, d, signature) {
   }
 
   y += 64
-  total('Cəmi', fmtMoney(d.total), true)
+  total(d.isReturn ? 'Borcdan çıxılır' : 'Cəmi', fmtMoney(d.total), true)
   if (d.paid > 0) {
     y += 52
     total('Ödənilib', fmtMoney(d.paid))
@@ -146,7 +146,7 @@ function paint(ctx, d, signature) {
   ctx.textAlign = 'left'
   ctx.fillStyle = GREY
   ctx.font = `600 30px ${FONT}`
-  ctx.fillText('Qəbul etdi', M, y)
+  ctx.fillText(d.isReturn ? 'Təhvil verdi' : 'Qəbul etdi', M, y)
   const boxTop = y + 20
   const boxH = 230
   if (!signature) {
@@ -183,7 +183,8 @@ function paint(ctx, d, signature) {
 
 export async function renderReceipt(sale, extra) {
   const data = {
-    title: TITLES[sale.type] || 'QAIMƏ',
+    title: TITLES[sale.type] || 'QAİMƏ',
+    isReturn: sale.type === 'return',
     soldAt: fmtStamp(sale.createdAt),
     customer: sale.customerName,
     items: sale.items,

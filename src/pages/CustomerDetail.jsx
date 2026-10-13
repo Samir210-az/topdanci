@@ -212,7 +212,7 @@ export default function CustomerDetail() {
             {doc.note && <p className="muted small">{doc.note}</p>}
             {!doc.canceled && (
               <div className="page-actions" style={{ marginLeft: 0 }}>
-                {kind === 'sale' && doc.type !== 'return' && (
+                {kind === 'sale' && (
                   <button type="button" className="btn sm" onClick={() => setReceiptFor(doc.id)}>
                     <Icon name="send" size={16} /> {doc.receipt ? 'Qaimə (saxlanılıb)' : 'Qaimə (PDF)'}
                   </button>
