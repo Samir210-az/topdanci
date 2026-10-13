@@ -111,5 +111,23 @@ export function planCancel({ fx, stockOf, holdingsOf }) {
     }
   }
 
-  return { stock, holdings, balance: fx.balance === 0 ? 0 : -fx.balance }
+  return {
+    stock,
+    holdings,
+    balance: fx.balance === 0 ? 0 : -fx.balance,
+    lotsOut: fx.lotsIn || {},
+    lotsIn: fx.lotsOut || {},
+    holdCost: negate(fx.holdCost || {}),
+  }
+}
+
+export function planPurchase({ items, paid = 0 }) {
+  if (!items.length) throw new LedgerError('Alış üçün mal seçilməyib')
+  for (const line of items) {
+    if (!isInt(line.qty) || line.qty <= 0) throw new LedgerError(`“${line.name}” üçün say düzgün deyil`)
+    if (!isInt(line.cost) || line.cost <= 0) throw new LedgerError(`“${line.name}” üçün alış qiyməti düzgün deyil`)
+  }
+  const total = items.reduce((sum, line) => sum + line.qty * line.cost, 0)
+  assertPaid(paid, total)
+  return { total, paid, fx: { stock: sumByProduct(items), holdings: {}, balance: total - paid } }
 }

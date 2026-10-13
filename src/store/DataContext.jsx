@@ -7,11 +7,19 @@ import { reportError } from '../lib/events'
 
 const DataContext = createContext(null)
 
-const SOURCES = ['products', 'customers', 'sales', 'payments']
+const SOURCES = ['products', 'customers', 'sales', 'payments', 'suppliers', 'purchases', 'supplierPayments']
 const byName = (a, b) => (a.name || '').localeCompare(b.name || '', 'az')
 
 export function DataProvider({ children }) {
-  const [data, setData] = useState({ products: [], customers: [], sales: [], payments: [] })
+  const [data, setData] = useState({
+    products: [],
+    customers: [],
+    sales: [],
+    payments: [],
+    suppliers: [],
+    purchases: [],
+    supplierPayments: [],
+  })
   const [loaded, setLoaded] = useState({})
   const [pendingBy, setPendingBy] = useState({})
   const [online, setOnline] = useState(navigator.onLine)
@@ -25,6 +33,9 @@ export function DataProvider({ children }) {
       customers: collection(db, 'customers'),
       sales: recent('sales'),
       payments: recent('payments'),
+      suppliers: collection(db, 'suppliers'),
+      purchases: recent('purchases'),
+      supplierPayments: recent('supplierPayments'),
     }
 
     const seen = {}
@@ -61,6 +72,7 @@ export function DataProvider({ children }) {
   const value = useMemo(() => {
     const products = data.products.filter((p) => !p.archived).sort(byName)
     const customers = [...data.customers].sort(byName)
+    const suppliers = [...data.suppliers].sort(byName)
     return {
       ready: SOURCES.every((key) => loaded[key]),
       products,
@@ -69,6 +81,10 @@ export function DataProvider({ children }) {
       customerMap: Object.fromEntries(customers.map((c) => [c.id, c])),
       sales: data.sales,
       payments: data.payments,
+      suppliers,
+      supplierMap: Object.fromEntries(suppliers.map((x) => [x.id, x])),
+      purchases: data.purchases,
+      supplierPayments: data.supplierPayments,
       pending: Object.values(pendingBy).some(Boolean),
       online,
     }

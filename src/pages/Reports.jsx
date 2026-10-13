@@ -112,7 +112,8 @@ function Sales({ days }) {
 }
 
 function Debts() {
-  const { customers } = useData()
+  const { customers, suppliers } = useData()
+  const owed = suppliers.reduce((sum, x) => sum + Math.max(x.balance || 0, 0), 0)
   const debtors = customers.filter((c) => c.balance > 0).sort((a, b) => b.balance - a.balance)
   const total = debtors.reduce((sum, c) => sum + c.balance, 0)
 
@@ -127,6 +128,10 @@ function Debts() {
   return (
     <>
       <div className="summary">
+        <div>
+          <span>Mənim təchizatçılara borcum</span>
+          <span>{fmtMoney(owed)}</span>
+        </div>
         <div className="total">
           <span>Ümumi borc</span>
           <span>{fmtMoney(total)}</span>

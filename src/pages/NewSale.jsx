@@ -7,11 +7,13 @@ import { useCart } from '../store/CartContext'
 import { useData } from '../store/DataContext'
 import { createSale } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
+import { lotsOf, takeOldest, unitCost } from '../lib/lots'
 import { fmtMoney, fromQepik, toQepik } from '../lib/money'
 
 function CartLine({ line, product, onQty, onPrice, onRemove }) {
   const [price, setPrice] = useState(fromQepik(line.price))
   const stock = product?.stock || 0
+  const cost = product ? unitCost(takeOldest(lotsOf(product), Math.min(line.qty, stock)).taken) : 0
 
   return (
     <div className="line">
@@ -38,7 +40,10 @@ function CartLine({ line, product, onQty, onPrice, onRemove }) {
           }}
         />
       </div>
-      <div className="muted small">Cəmi: {fmtMoney(line.qty * line.price)}</div>
+      <div className="muted small">
+        Cəmi: {fmtMoney(line.qty * line.price)} · Alış: {fmtMoney(cost)}
+        {cost > 0 && line.price < cost && <b className="amount-neg"> · alışdan ucuzdur</b>}
+      </div>
     </div>
   )
 }

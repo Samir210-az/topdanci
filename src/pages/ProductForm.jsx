@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import Sheet from '../components/Sheet'
 import { Field, MoneyInput, PageHeader, Stepper, StockBadge } from '../components/ui'
 import { UNITS } from '../config'
 import { useData } from '../store/DataContext'
-import { adjustStock, receiveStock, saveProduct, setProductArchived } from '../lib/actions'
+import { adjustStock, saveProduct, setProductArchived } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fileToDataUrl } from '../lib/image'
 import { fromQepik, toQepik } from '../lib/money'
@@ -52,7 +52,7 @@ function ProductEditor({ product }) {
         data: {
           name,
           price,
-          cost: toQepik(form.cost),
+          ...(product ? {} : { cost: toQepik(form.cost) }),
           unit: form.unit,
           lowStock: form.lowStock,
           image: form.image,
@@ -96,9 +96,11 @@ function ProductEditor({ product }) {
           <Field label="Satış qiyməti, ₼">
             <MoneyInput value={form.price} onChange={set('price')} />
           </Field>
-          <Field label="Alış qiyməti, ₼" hint="Mənfəət hesabı üçün">
-            <MoneyInput value={form.cost} onChange={set('cost')} />
-          </Field>
+          {!product && (
+            <Field label="Alış qiyməti, ₼" hint="Başlanğıc qalıq üçün. Sonra alış səhifəsindən avtomatik gəlir">
+              <MoneyInput value={form.cost} onChange={set('cost')} />
+            </Field>
+          )}
           <Field label="Ölçü vahidi">
             <select className="input" value={form.unit} onChange={(event) => set('unit')(event.target.value)}>
               {UNITS.map((unit) => (
@@ -132,9 +134,9 @@ function ProductEditor({ product }) {
             <StockBadge product={product} />
           </div>
           <div className="form-grid">
-            <button type="button" className="btn" onClick={() => setSheet('receive')}>
-              Mal qəbulu
-            </button>
+            <Link className="btn" to={`/purchases/new?product=${product.id}`}>
+              Mal alışı
+            </Link>
             <button type="button" className="btn" onClick={() => setSheet('adjust')}>
               Sayı düzəlt
             </button>
@@ -155,43 +157,10 @@ function ProductEditor({ product }) {
 
       {product && (
         <>
-          <ReceiveSheet open={sheet === 'receive'} product={product} onClose={() => setSheet(null)} />
           <AdjustSheet open={sheet === 'adjust'} product={product} onClose={() => setSheet(null)} />
         </>
       )}
     </>
-  )
-}
-
-function ReceiveSheet({ open, product, onClose }) {
-  const [qty, setQty] = useState(1)
-  const [cost, setCost] = useState('')
-
-  function submit(event) {
-    event.preventDefault()
-    try {
-      receiveStock({ product, qty, unitCost: toQepik(cost) })
-      notify('Mal qəbul edildi', 'success')
-      setQty(1)
-      setCost('')
-      onClose()
-    } catch (error) {
-      reportError(error)
-    }
-  }
-
-  return (
-    <Sheet open={open} title="Mal qəbulu" onClose={onClose}>
-      <form className="stack" onSubmit={submit}>
-        <Field label={`Say (${product.unit})`}>
-          <Stepper value={qty} min={1} onChange={setQty} label="Say" />
-        </Field>
-        <Field label="Alış qiyməti (1 vahid), ₼" hint="Boş qalsa, orta alış qiyməti dəyişmir">
-          <MoneyInput value={cost} onChange={setCost} />
-        </Field>
-        <button className="btn primary block">Qəbul et</button>
-      </form>
-    </Sheet>
   )
 }
 

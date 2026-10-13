@@ -9,7 +9,7 @@ import { fmtMoney } from '../lib/money'
 const TYPE_LABEL = { sale: 'satış', consign: 'konsiqnasiya', settle: 'hesablaşma' }
 
 export default function Dashboard() {
-  const { sales, payments, customers, products, productMap } = useData()
+  const { sales, payments, customers, suppliers, products, productMap } = useData()
 
   const view = useMemo(() => {
     const today = dateKey(new Date())
@@ -26,9 +26,10 @@ export default function Dashboard() {
         Object.entries(c.holdings || {}).reduce((s, [id, qty]) => s + Math.max(qty, 0) * (productMap[id]?.price || 0), 0),
       0,
     )
+    const owed = suppliers.reduce((sum, s) => sum + Math.max(s.balance || 0, 0), 0)
     const low = products.filter((p) => (p.stock || 0) <= (p.lowStock ?? 5))
-    return { todaySales, revenue, consigned, collected, debt, atCustomers, low }
-  }, [sales, payments, customers, products, productMap])
+    return { todaySales, revenue, consigned, collected, debt, atCustomers, owed, low }
+  }, [sales, payments, customers, suppliers, products, productMap])
 
   return (
     <>
@@ -51,6 +52,10 @@ export default function Dashboard() {
           <span>Müştərilərdə mal</span>
           <strong>{fmtMoney(view.atCustomers)}</strong>
         </Link>
+        <Link to="/purchases" className="stat">
+          <span>Təchizatçılara borcum</span>
+          <strong>{fmtMoney(view.owed)}</strong>
+        </Link>
         <div className="stat">
           <span>Bu gün konsiqnasiyaya verilən</span>
           <strong>{fmtMoney(view.consigned)}</strong>
@@ -66,6 +71,15 @@ export default function Dashboard() {
         </Link>
         <Link to="/customers" className="btn">
           <Icon name="users" /> Ödəniş al
+        </Link>
+        <Link to="/purchases/new" className="btn">
+          <Icon name="box" /> Mal alışı
+        </Link>
+        <Link to="/purchases" className="btn">
+          <Icon name="download" /> Təchizatçılar
+        </Link>
+        <Link to="/reports" className="btn">
+          <Icon name="chart" /> Hesabat
         </Link>
       </div>
 

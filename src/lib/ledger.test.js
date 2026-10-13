@@ -116,3 +116,23 @@ test('pul qəpiyə düzgün çevrilir', () => {
   assert.equal(toQepik('1 250'), 125000)
   assert.equal(fromQepik(1999), '19.99')
 })
+
+test('alış: təchizatçıya borc ödənilməyən hissədir', async () => {
+  const { planPurchase } = await import('./ledger.js')
+  const plan = planPurchase({ items: [{ productId: 'a', name: 'Çay', qty: 10, cost: 500 }], paid: 2000 })
+  assert.equal(plan.total, 5000)
+  assert.equal(plan.fx.balance, 3000)
+  assert.deepEqual(plan.fx.stock, { a: 10 })
+})
+
+test('alış: qiymət olmadan qəbul olunmur', async () => {
+  const { planPurchase } = await import('./ledger.js')
+  assert.throws(() => planPurchase({ items: [{ productId: 'a', name: 'Çay', qty: 1, cost: 0 }] }), LedgerError)
+})
+
+test('alış ləğv: mal artıq satılıbsa, ləğv olunmur', () => {
+  assert.throws(
+    () => planCancel({ fx: { stock: { a: 10 }, holdings: {}, balance: 5000 }, stockOf: { a: 4 }, holdingsOf: {} }),
+    LedgerError,
+  )
+})
