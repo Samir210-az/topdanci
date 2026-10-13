@@ -653,3 +653,25 @@ table.data .num {
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+
+.stat.profit {
+  grid-column: 1 / -1;
+  background: #8fd4b0;
+  border-color: #8fd4b0;
+  color: #0e2a21;
+}
+
+.stat.profit span,
+.stat.profit small {
+  color: #1d4a3b;
+}
+
+.stat.profit small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+}
+
+.stat.profit strong {
+  font-size: 1.8rem;
+}

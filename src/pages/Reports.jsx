@@ -1,3 +1,4 @@
+import { summarize } from '../lib/summary'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../components/Icon'
@@ -37,9 +38,7 @@ function Sales({ days }) {
     const rows = sales.filter((s) => s.dateKey >= from && !s.canceled)
     const real = rows.filter((s) => s.type === 'sale' || s.type === 'settle')
     const back = rows.filter((s) => s.type === 'return')
-    const margin = (s) => s.items.reduce((p, l) => p + l.qty * l.price - (l.costTotal ?? l.qty * (l.cost || 0)), 0)
-    const revenue = real.reduce((sum, s) => sum + s.total, 0) - back.reduce((sum, s) => sum + s.total, 0)
-    const profit = real.reduce((sum, s) => sum + margin(s), 0) - back.reduce((sum, s) => sum + margin(s), 0)
+    const { revenue, cost, profit } = summarize(rows)
     const newDebt = rows.reduce((sum, s) => sum + Math.max(s.fx?.balance ?? s.total - s.paid, 0), 0)
     const collected =
       rows.reduce((sum, s) => sum + (s.paid || 0), 0) +
@@ -58,7 +57,7 @@ function Sales({ days }) {
       .map(([id, entry]) => ({ id, ...entry }))
       .filter((p) => p.qty > 0)
       .sort((a, b) => b.sum - a.sum)
-    return { revenue, profit, newDebt, collected, top, rows }
+    return { revenue, cost, profit, newDebt, collected, top, rows }
   }, [sales, payments, days])
 
   function exportCsv() {
@@ -75,6 +74,11 @@ function Sales({ days }) {
           <span>Satış</span>
           <strong>{fmtMoney(report.revenue)}</strong>
         </div>
+        <div className="stat profit">
+          <span>Qazanc (satış − alış)</span>
+          <strong>{fmtMoney(report.profit)}</strong>
+          <small>Satılan malın alış dəyəri: {fmtMoney(report.cost)}</small>
+        </div>
         <div className="stat">
           <span>Yığılan pul</span>
           <strong>{fmtMoney(report.collected)}</strong>
@@ -83,12 +87,8 @@ function Sales({ days }) {
           <span>Yeni borc</span>
           <strong>{fmtMoney(report.newDebt)}</strong>
         </div>
-        <div className="stat">
-          <span>Mənfəət</span>
-          <strong>{fmtMoney(report.profit)}</strong>
-        </div>
       </div>
-      <p className="muted small">Mənfəət satış anındakı alış qiymətinə görə hesablanır. Satışa verilən mal satılanda satış sayılır, qaytarılan mal çıxılır.</p>
+      <p className="muted small">Qazanc satış anındakı alış qiymətinə görə hesablanır. Satışa verilən mal satılanda satış sayılır, qaytarılan mal çıxılır.</p>
 
       <h2>Ən çox satılanlar</h2>
       {report.top.length === 0 ? (

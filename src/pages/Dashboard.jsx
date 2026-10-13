@@ -5,6 +5,7 @@ import { PageHeader, Segmented } from '../components/ui'
 import { useData } from '../store/DataContext'
 import { dateKey, toDate, fmtTime } from '../lib/dates'
 import { fmtMoney } from '../lib/money'
+import { summarize } from '../lib/summary'
 
 const TYPE_LABEL = { sale: 'satış', consign: 'satışa verilən', settle: 'hesablaşma', return: 'qaytarma' }
 
@@ -18,10 +19,7 @@ export default function Dashboard() {
     const live = sales.filter((s) => !s.canceled)
     const inPeriod = live.filter((s) => s.dateKey >= from)
 
-    const revenue = inPeriod.reduce(
-      (sum, s) => (s.type === 'consign' ? sum : s.type === 'return' ? sum - s.total : sum + s.total),
-      0,
-    )
+    const { revenue, cost, profit } = summarize(inPeriod)
     const consigned = inPeriod.filter((s) => s.type === 'consign').reduce((sum, s) => sum + s.total, 0)
     const collected =
       inPeriod.reduce((sum, s) => sum + (s.paid || 0), 0) +
@@ -37,7 +35,7 @@ export default function Dashboard() {
     )
     const low = products.filter((p) => (p.stock || 0) <= (p.lowStock ?? 5))
     const todaySales = live.filter((s) => s.dateKey === today)
-    return { todaySales, revenue, consigned, collected, debt, atCustomers, owed, low }
+    return { todaySales, revenue, cost, profit, consigned, collected, debt, atCustomers, owed, low }
   }, [sales, payments, customers, suppliers, products, productMap, period])
 
   return (
@@ -120,6 +118,11 @@ export default function Dashboard() {
             <span>Satış</span>
             <strong>{fmtMoney(view.revenue)}</strong>
           </div>
+          <Link to="/reports" className="stat profit">
+            <span>Qazanc (satış − alış)</span>
+            <strong>{fmtMoney(view.profit)}</strong>
+            <small>Satılan malın alış dəyəri: {fmtMoney(view.cost)}</small>
+          </Link>
           <div className="stat">
             <span>Yığılan pul</span>
             <strong>{fmtMoney(view.collected)}</strong>
