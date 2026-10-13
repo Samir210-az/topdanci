@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'samir.akhundoff@gmail.com';
+    }
+
+    match /{collection}/{document=**} {
+      allow read, write: if isOwner()
+        && collection in ['products', 'customers', 'sales', 'payments', 'stockMoves'];
+    }
+  }
+}
