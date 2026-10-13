@@ -281,46 +281,81 @@ table.data .num {
   color: #fff;
 }
 
-.slide {
-  position: relative;
+.slide-page {
   display: grid;
-  grid-template-rows: 1fr auto;
   height: 100dvh;
+  padding: calc(64px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
   scroll-snap-align: start;
 }
 
-.slide img,
-.slide .pimg {
+.slide-empty {
+  align-self: center;
+  text-align: center;
+  color: #c9d6cf;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 0;
+}
+
+.tile {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #1a2a22;
+}
+
+.tile-photo {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.tile-photo .pimg {
   width: 100%;
   height: 100%;
-  min-height: 0;
   border-radius: 0;
   object-fit: cover;
 }
 
-.slide .pimg.placeholder {
+.tile .pimg.placeholder {
   background: #1d3a30;
   color: #7fb59f;
-  font-size: 6rem;
+  font-size: 3rem;
 }
 
-.slide-info {
+.tile-info {
   display: grid;
-  gap: 8px;
-  padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
-  background: linear-gradient(#101914cc, #101914);
+  gap: 4px;
+  padding: 8px 10px 10px;
 }
 
-.slide-info h2 {
-  font-size: 1.5rem;
+.tile-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.slide-info .price {
-  font-size: 1.6rem;
+.zoom-img {
+  width: 100%;
+  height: auto;
+  max-height: 55dvh;
+  border-radius: 12px;
+  object-fit: contain;
 }
 
-.slide-info p {
-  color: #c9d6cf;
+@media (min-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .present-bar {
@@ -366,18 +401,6 @@ table.data .num {
   font-size: 0.75rem;
   color: #fff;
   text-shadow: 0 1px 3px #000;
-}
-
-@media (min-width: 720px) {
-  .slide {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-  }
-
-  .slide-info {
-    align-content: center;
-    background: #101914;
-  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

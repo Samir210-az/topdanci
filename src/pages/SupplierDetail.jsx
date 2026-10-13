@@ -7,7 +7,7 @@ import { useData } from '../store/DataContext'
 import { cancelPurchase, cancelSupplierPayment, createSupplierPayment } from '../lib/actions'
 import { notify, reportError } from '../lib/events'
 import { fmtMoney, toQepik } from '../lib/money'
-import { fmtDateTime, toDate } from '../lib/dates'
+import { addDays, dateKey, fmtDateTime, startOfDay, toDate } from '../lib/dates'
 import { telLink, waLink } from '../lib/share'
 
 const METHODS = ['Nağd', 'Kart', 'Köçürmə']
@@ -65,6 +65,7 @@ export default function SupplierDetail() {
   const { id } = useParams()
   const { supplierMap, productMap, purchases, supplierPayments } = useData()
   const [paying, setPaying] = useState(false)
+  const [days, setDays] = useState(30)
   const supplier = supplierMap[id]
 
   const history = useMemo(
@@ -77,6 +78,22 @@ export default function SupplierDetail() {
       ].sort((a, b) => b.at - a.at),
     [purchases, supplierPayments, id],
   )
+
+  const period = useMemo(() => {
+    const from = dateKey(addDays(startOfDay(), -(days - 1)))
+    const bought = purchases.filter((p) => p.supplierId === id && !p.canceled && p.dateKey >= from)
+    const paid = supplierPayments.filter((p) => p.supplierId === id && !p.canceled && p.dateKey >= from)
+    const qty = {}
+    for (const purchase of bought) {
+      for (const line of purchase.items) qty[line.productId] = (qty[line.productId] || 0) + line.qty
+    }
+    return {
+      qty,
+      total: bought.reduce((sum, p) => sum + p.total, 0),
+      paid: bought.reduce((sum, p) => sum + p.paid, 0) + paid.reduce((sum, p) => sum + p.amount, 0),
+      count: bought.length,
+    }
+  }, [purchases, supplierPayments, id, days])
 
   if (!supplier) return <PageHeader title="Təchizatçı tapılmadı" back />
 
@@ -144,23 +161,48 @@ export default function SupplierDetail() {
         </div>
       </section>
 
+      <section className="stack">
+        <div className="chips">
+          {[7, 30, 90].map((n) => (
+            <button key={n} type="button" className={days === n ? 'on' : ''} onClick={() => setDays(n)}>
+              {n} gün
+            </button>
+          ))}
+        </div>
+        <div className="stats">
+          <div className="stat">
+            <span>Alınıb ({period.count} alış)</span>
+            <strong>{fmtMoney(period.total)}</strong>
+          </div>
+          <div className="stat">
+            <span>Ödənilib</span>
+            <strong>{fmtMoney(period.paid)}</strong>
+          </div>
+        </div>
+      </section>
+
       {goods.length > 0 && (
         <section className="stack">
           <h2>Bu təchizatçıdan alınan mallar</h2>
           <div className="list">
-            {goods.map((g) => (
-              <div key={g.id} className="row">
-                <div className="grow">
-                  <strong>{g.name}</strong>
-                  <span className="muted small">Son alış qiyməti: {fmtMoney(g.lastCost)}</span>
+            {goods.map((g) => {
+              const product = productMap[g.id]
+              return (
+                <div key={g.id} className="row">
+                  <div className="grow">
+                    <strong>{g.name}</strong>
+                    <span className="muted small">
+                      Son alış: {fmtMoney(g.lastCost)} · {days} gündə alınıb: {period.qty[g.id] || 0} {g.unit}
+                    </span>
+                  </div>
+                  <span className="badge muted-badge">
+                    Anbarda: {product ? product.stock || 0 : 0} {g.unit}
+                  </span>
                 </div>
-                <span className="badge muted-badge">
-                  {g.qty} {g.unit}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
-          <p className="muted small">Say bu təchizatçıdan bütün dövr üzrə alınan malı göstərir, qalıq deyil.</p>
+          <p className="muted small">Anbar qalığı malın ümumi qalığıdır, başqa təchizatçıdan alınan da buna daxildir.</p>
         </section>
       )}
 
